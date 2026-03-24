@@ -738,9 +738,10 @@
 // ---- Class Presets (loaded from Google Sheets) ----
 let CLASS_PRESETS = {};
 let TRANSFER_DATA = []; // 振替予定データ
+let LAST_SONGS = {}; // 各生徒の前回曲名
 
 async function loadMasterData() {
-  await Promise.all([loadClassMaster(), loadTransferData()]);
+  await Promise.all([loadClassMaster(), loadTransferData(), loadLastSongs()]);
 }
 
 async function loadClassMaster() {
@@ -797,6 +798,35 @@ async function loadTransferData() {
     const script = document.createElement('script');
     script.id = 'transfer-script';
     script.src = GAS_READ_URL + '?action=transfer&callback=' + callbackName;
+    document.head.appendChild(script);
+    script.onerror = () => { clearTimeout(timeout); resolve(); };
+  });
+}
+
+async function loadLastSongs() {
+  return new Promise((resolve) => {
+    const callbackName = 'lastSongsCallback_' + Date.now();
+    const timeout = setTimeout(() => {
+      delete window[callbackName];
+      const s = document.getElementById('lastsongs-script');
+      if (s) s.remove();
+      resolve();
+    }, 10000);
+
+    window[callbackName] = function(data) {
+      clearTimeout(timeout);
+      delete window[callbackName];
+      const s = document.getElementById('lastsongs-script');
+      if (s) s.remove();
+      if (data.status === 'ok') {
+        LAST_SONGS = data.songs || {};
+      }
+      resolve();
+    };
+
+    const script = document.createElement('script');
+    script.id = 'lastsongs-script';
+    script.src = GAS_READ_URL + '?action=last_songs&callback=' + callbackName;
     document.head.appendChild(script);
     script.onerror = () => { clearTimeout(timeout); resolve(); };
   });
@@ -952,6 +982,13 @@ function loadPreset(selectEl) {
     const idx = i + 1;
     document.getElementById(`s${idx}_name`).value = s.name;
     document.getElementById(`s${idx}_phase`).value = s.phase;
+
+    // 前回の曲を自動入力
+    const songKey = key + '___' + s.name;
+    const lastSong = LAST_SONGS[songKey];
+    if (lastSong && lastSong.song) {
+      document.getElementById(`s${idx}_song`).value = lastSong.song;
+    }
   });
 }
 
