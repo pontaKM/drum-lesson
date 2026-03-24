@@ -989,6 +989,7 @@ function loadPreset(selectEl) {
     if (lastSong && lastSong.song) {
       document.getElementById(`s${idx}_song`).value = lastSong.song;
     }
+    // 次曲候補欄は削除済み
   });
 }
 
@@ -1053,10 +1054,7 @@ function buildStudentCard(i) {
             <option value="17以上">17週以上（4ヶ月超）</option>
           </select>
         </div>
-        <div class="field-group" style="grid-column:1/-1;">
-          <div class="field-label" style="color:var(--text3);">次曲候補 <span style="font-weight:400;">（任意・変わったときだけ）</span></div>
-          <input type="text" id="s${i}_next_song" placeholder="検討中の曲名">
-        </div>
+
         ${sliderHTML}
         <div class="field-group" style="grid-column: 1/-1;">
           <div class="field-label">メモ</div>
@@ -1095,7 +1093,6 @@ function collectData() {
       song: document.getElementById(`s${i}_song`).value || 'なし',
       songSection: document.getElementById(`s${i}_song_section`).value || 'なし',
       songWeeks: document.getElementById(`s${i}_song_weeks`).value,
-      nextSong: document.getElementById(`s${i}_next_song`).value || 'なし',
       memo: document.getElementById(`s${i}_memo`).value || 'なし',
     });
   }
@@ -1113,7 +1110,6 @@ function buildPrompt(data) {
 - 今日やった曲：${s.song}
 - 今日やったセクション：${s.songSection}
 - 何週目：${s.songWeeks}
-- 次曲候補：${s.nextSong}
 - メモ：${s.memo}`).join('\n');
 
   return `あなたはドラム講師のアシスタントです。以下のレッスン記録をもとに判断してください。
@@ -1140,6 +1136,7 @@ function buildPrompt(data) {
 - 自律度1〜2：課題を出さない
 
 グループ特性：1クラス5人・年齢もレベルもバラバラ。上手い子には1tips発展、遅れている子には復習案を。
+メモに「次曲：〇〇」が含まれる場合は曲アドバイスに次曲への移行タイミングを含める。
 
 ### 入力データ
 
