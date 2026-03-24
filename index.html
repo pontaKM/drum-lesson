@@ -648,6 +648,28 @@
     line-height: 1.6;
   }
 
+  /* Class buttons */
+  .class-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text2);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    padding: 12px 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    width: 100%;
+  }
+  .class-btn:hover { border-color: var(--accent); color: var(--text); }
+  .class-btn.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 700;
+  }
+
   /* Day buttons */
   .day-btn {
     background: var(--surface);
@@ -794,12 +816,16 @@
   <!-- Class info -->
   <div class="section">
     <div class="section-label">クラス情報</div>
-    <div class="class-row">
-      <select id="class-select" onchange="loadPreset(this)">
-        <option value="">── クラスを選択 ──</option>
-      </select>
-      <input type="date" id="lesson-date">
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+      <button class="day-btn active" id="input-day-fri" onclick="filterInputDay('金曜')">金曜</button>
+      <button class="day-btn" id="input-day-sat" onclick="filterInputDay('土曜')">土曜</button>
+      <input type="date" id="lesson-date" style="flex:1;margin-left:8px;">
     </div>
+    <div id="class-btn-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px;"></div>
+    <select id="class-select" onchange="loadPreset(this)" style="display:none;">
+      <option value="">── クラスを選択 ──</option>
+    </select>
+    <div id="selected-class-display" style="display:none;font-family:'Space Mono',monospace;font-size:12px;color:var(--accent);padding:6px 0;"></div>
   </div>
 
   <!-- Students -->
@@ -1006,10 +1032,61 @@ async function loadLastSongs() {
   });
 }
 
+let currentInputDay = localStorage.getItem('drumLastDay') || '金曜';
+
+function filterInputDay(day) {
+  currentInputDay = day;
+  localStorage.setItem('drumLastDay', day);
+  document.getElementById('input-day-fri').classList.toggle('active', day === '金曜');
+  document.getElementById('input-day-sat').classList.toggle('active', day === '土曜');
+  renderClassButtons(day);
+}
+
+function renderClassButtons(day) {
+  const grid = document.getElementById('class-btn-grid');
+  const classes = Object.keys(CLASS_PRESETS)
+    .filter(c => c.startsWith(day))
+    .sort();
+
+  const lastClass = localStorage.getItem('drumLastClass');
+
+  grid.innerHTML = classes.map(c => {
+    const isSelected = c === lastClass;
+    return `<button class="class-btn ${isSelected ? 'selected' : ''}"
+      onclick="selectClassBtn('${c}')">${c.replace(day, '').trim()}</button>`;
+  }).join('');
+
+  // 前回選択クラスを自動ロード
+  if (lastClass && classes.includes(lastClass)) {
+    const fakeSelect = { value: lastClass };
+    loadPreset(fakeSelect);
+    showSelectedClass(lastClass);
+  }
+}
+
+function selectClassBtn(className) {
+  localStorage.setItem('drumLastClass', className);
+  // ボタンのスタイル更新
+  document.querySelectorAll('.class-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.textContent.trim() === className.replace(currentInputDay, '').trim());
+  });
+  // hidden selectを更新してloadPreset呼び出し
+  const sel = document.getElementById('class-select');
+  sel.value = className;
+  loadPreset(sel);
+  showSelectedClass(className);
+}
+
+function showSelectedClass(className) {
+  const display = document.getElementById('selected-class-display');
+  display.textContent = '選択中：' + className;
+  display.style.display = 'block';
+}
+
 function populateClassSelectors() {
   const classNames = Object.keys(CLASS_PRESETS).sort();
 
-  // 入力タブのクラス選択
+  // hidden select（loadPreset用）
   const sel = document.getElementById('class-select');
   sel.innerHTML = '<option value="">── クラスを選択 ──</option>';
   classNames.forEach(name => {
@@ -1030,6 +1107,13 @@ function populateClassSelectors() {
       reviewSel.appendChild(opt);
     });
   }
+
+  // 入力タブの曜日ボタンと初期表示
+  const savedDay = localStorage.getItem('drumLastDay') || '金曜';
+  currentInputDay = savedDay;
+  document.getElementById('input-day-fri').classList.toggle('active', savedDay === '金曜');
+  document.getElementById('input-day-sat').classList.toggle('active', savedDay === '土曜');
+  renderClassButtons(savedDay);
 }
 
 // ---- Skill hints ----
