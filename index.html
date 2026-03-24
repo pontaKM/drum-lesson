@@ -686,15 +686,19 @@
 <script>
 // ---- Class Presets (loaded from Google Sheets) ----
 let CLASS_PRESETS = {};
+let TRANSFER_DATA = []; // 振替予定データ
 
 async function loadMasterData() {
+  await Promise.all([loadClassMaster(), loadTransferData()]);
+}
+
+async function loadClassMaster() {
   return new Promise((resolve) => {
     const callbackName = 'masterCallback_' + Date.now();
     const timeout = setTimeout(() => {
       delete window[callbackName];
       const s = document.getElementById('master-script');
       if (s) s.remove();
-      console.warn('マスターデータの読み込みタイムアウト');
       resolve();
     }, 10000);
 
@@ -714,10 +718,36 @@ async function loadMasterData() {
     script.id = 'master-script';
     script.src = GAS_READ_URL + '?action=master&callback=' + callbackName;
     document.head.appendChild(script);
-    script.onerror = () => {
+    script.onerror = () => { clearTimeout(timeout); resolve(); };
+  });
+}
+
+async function loadTransferData() {
+  return new Promise((resolve) => {
+    const callbackName = 'transferCallback_' + Date.now();
+    const timeout = setTimeout(() => {
+      delete window[callbackName];
+      const s = document.getElementById('transfer-script');
+      if (s) s.remove();
+      resolve();
+    }, 10000);
+
+    window[callbackName] = function(data) {
       clearTimeout(timeout);
+      delete window[callbackName];
+      const s = document.getElementById('transfer-script');
+      if (s) s.remove();
+      if (data.status === 'ok') {
+        TRANSFER_DATA = data.transfers || [];
+      }
       resolve();
     };
+
+    const script = document.createElement('script');
+    script.id = 'transfer-script';
+    script.src = GAS_READ_URL + '?action=transfer&callback=' + callbackName;
+    document.head.appendChild(script);
+    script.onerror = () => { clearTimeout(timeout); resolve(); };
   });
 }
 
@@ -856,7 +886,17 @@ function loadPreset(selectEl) {
     return s.lessonDate === todayStr;
   });
 
-  visibleStudents.forEach((s, i) => {
+  // 振替生徒：当日・当クラスのみ追加
+  const transferStudents = TRANSFER_DATA.filter(t =>
+    t.date === todayStr && t.className === key
+  ).map(t => ({
+    name: t.name + '（振替）',
+    phase: 'Ph.2' // デフォルト。入力後に変更可
+  }));
+
+  const allStudents = [...visibleStudents, ...transferStudents];
+
+  allStudents.forEach((s, i) => {
     if (i >= STUDENT_COUNT) return;
     const idx = i + 1;
     document.getElementById(`s${idx}_name`).value = s.name;
@@ -1329,6 +1369,23 @@ function renderReview(rows, className) {
     const allTrialStudents2 = CLASS_PRESETS[className]
       ? CLASS_PRESETS[className].filter(s => s.phase === '体験')
       : [];
+    const transfersForClass2 = TRANSFER_DATA.filter(t => t.className === className);
+    const transferBadge2 = transfersForClass2.length > 0
+      ? transfersForClass2.map(t => {
+          const dateStr = t.date
+            ? new Date(t.date).toLocaleDateString('ja-JP', {month:'long', day:'numeric', weekday:'short'})
+            : '日程未定';
+          const fromStr = t.originalClass ? `${t.originalClass}から` : '';
+          return `<div style="background:rgba(74,110,56,0.1);border:1px solid var(--accent);border-radius:6px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:18px;">🔄</span>
+            <div>
+              <div style="font-weight:700;color:var(--accent);font-size:13px;">振替予定：${t.name}</div>
+              <div style="font-size:12px;color:var(--text2);margin-top:2px;">${dateStr}　${fromStr}</div>
+            </div>
+          </div>`;
+        }).join('')
+      : '';
+
     const trialBadge = allTrialStudents2.length > 0
       ? allTrialStudents2.map(s => {
           const dateStr = s.lessonDate
@@ -1345,7 +1402,7 @@ function renderReview(rows, className) {
         }).join('')
       : '';
     document.getElementById('review-content').innerHTML =
-      trialBadge + '<div style="color:var(--text3);font-size:13px;padding:8px 0;">レッスン記録はまだありません</div>';
+      transferBadge2 + trialBadge + '<div style="color:var(--text3);font-size:13px;padding:8px 0;">レッスン記録はまだありません</div>';
     return;
   }
 
@@ -1370,6 +1427,25 @@ function renderReview(rows, className) {
     ? CLASS_PRESETS[className].filter(s => s.phase === '体験')
     : [];
 
+  // 振替生徒バッジ
+  const transfersForClass = TRANSFER_DATA.filter(t => t.className === className);
+  const transferBadge = transfersForClass.length > 0
+    ? transfersForClass.map(t => {
+        const dateStr = t.date
+          ? new Date(t.date).toLocaleDateString('ja-JP', {month:'long', day:'numeric', weekday:'short'})
+          : '日程未定';
+        const fromStr = t.originalClass ? `${t.originalClass}から` : '';
+        const noteStr = t.note ? `・${t.note}` : '';
+        return `<div style="background:rgba(74,110,56,0.1);border:1px solid var(--accent);border-radius:6px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:18px;">🔄</span>
+          <div>
+            <div style="font-weight:700;color:var(--accent);font-size:13px;">振替予定：${t.name}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px;">${dateStr}　${fromStr}${noteStr}</div>
+          </div>
+        </div>`;
+      }).join('')
+    : '';
+
   const trialBadge = allTrialStudents.length > 0
     ? allTrialStudents.map(s => {
         const dateStr = s.lessonDate
@@ -1386,7 +1462,7 @@ function renderReview(rows, className) {
       }).join('')
     : '';
 
-  let html = trialBadge + `
+  let html = transferBadge + trialBadge + `
     <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
       <div class="score-card" style="flex:1;min-width:200px;padding:14px 16px;">
         <div class="section-label" style="margin-bottom:6px;">前回レッスン日</div>
