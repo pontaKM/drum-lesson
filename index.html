@@ -617,11 +617,10 @@
   <!-- Class info -->
   <div class="section">
     <div class="section-label">クラス情報</div>
-    <div class="class-row" style="grid-template-columns:1fr 1fr 1fr;">
+    <div class="class-row">
       <select id="class-select" onchange="loadPreset(this)">
         <option value="">── クラスを選択 ──</option>
       </select>
-      <input type="text" id="class-name" placeholder="クラス名（手入力も可）">
       <input type="date" id="lesson-date">
     </div>
   </div>
@@ -835,7 +834,7 @@ function loadPreset(selectEl) {
   if (!key) return;
   const students = CLASS_PRESETS[key];
   if (!students) return;
-  document.getElementById('class-name').value = key;
+  // class name is driven by select
 
   // 全生徒スロットをリセット
   for (let i = 1; i <= STUDENT_COUNT; i++) {
@@ -942,7 +941,7 @@ function toggleCard(i) {
 
 // ---- Collect Data ----
 function collectData() {
-  const className = document.getElementById('class-name').value || '未設定クラス';
+  const className = document.getElementById('class-select').value || '未設定クラス';
   const lessonDate = document.getElementById('lesson-date').value;
 
   const students = [];
@@ -1319,8 +1318,20 @@ async function loadReviewViaClaudeAPI(className) {
 
 function renderReview(rows, className) {
   if (!rows || rows.length === 0) {
+    const trialStudents = CLASS_PRESETS[className]
+      ? CLASS_PRESETS[className].filter(s => s.phase === '体験').map(s => s.name)
+      : [];
+    const trialBadge = trialStudents.length > 0
+      ? `<div style="background:rgba(184,94,34,0.12);border:1px solid var(--accent2);border-radius:6px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:18px;">🔔</span>
+          <div>
+            <div style="font-weight:700;color:var(--accent2);font-size:13px;">体験生徒あり</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px;">${trialStudents.join('・')}（キッズプリントを準備）</div>
+          </div>
+         </div>`
+      : '';
     document.getElementById('review-content').innerHTML =
-      '<div style="color:var(--text3);font-size:13px;padding:16px;">データがありません</div>';
+      trialBadge + '<div style="color:var(--text3);font-size:13px;padding:8px 0;">レッスン記録はまだありません</div>';
     return;
   }
 
@@ -1340,7 +1351,21 @@ function renderReview(rows, className) {
   const commonStage = rows[rows.length - 1]['共通化段階'] || '-';
   const burdenColor = burdenScore <= 8 ? 'var(--green)' : burdenScore <= 16 ? 'var(--yellow)' : 'var(--red)';
 
-  let html = `
+  // 体験生徒チェック
+  const trialStudents = CLASS_PRESETS[className]
+    ? CLASS_PRESETS[className].filter(s => s.phase === '体験').map(s => s.name)
+    : [];
+  const trialBadge = trialStudents.length > 0
+    ? `<div style="background:rgba(184,94,34,0.12);border:1px solid var(--accent2);border-radius:6px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:18px;">🔔</span>
+        <div>
+          <div style="font-weight:700;color:var(--accent2);font-size:13px;">体験生徒あり</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px;">${trialStudents.join('・')}（キッズプリントを準備）</div>
+        </div>
+       </div>`
+    : '';
+
+  let html = trialBadge + `
     <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
       <div class="score-card" style="flex:1;min-width:200px;padding:14px 16px;">
         <div class="section-label" style="margin-bottom:6px;">前回レッスン日</div>
