@@ -685,90 +685,68 @@
 </div><!-- /container -->
 
 <script>
-// ---- Class Presets (from lesson progress PDF) ----
-const CLASS_PRESETS = {
-  '土曜11時': {
-    students: [
-      {name:'麻生英一', phase:'Ph.4'},
-      {name:'森千紘',   phase:'Ph.4'},
-      {name:'岡村音色', phase:'Ph.2'},
-      {name:'宇都宮幸紀', phase:'Ph.3'},
-      {name:'青木奈美江', phase:'Ph.3'},
-    ]
-  },
-  '土曜12時': {
-    students: [
-      {name:'加藤淳之介', phase:'Ph.4'},
-      {name:'津村木蒔',   phase:'Ph.4'},
-      {name:'伊東幹大',   phase:'Ph.4'},
-      {name:'但木玄',     phase:'Ph.4'},
-      {name:'百瀬一慶',   phase:'Ph.2'},
-    ]
-  },
-  '土曜13時': {
-    students: [
-      {name:'蒔田鴻',   phase:'Ph.4'},
-      {name:'原田海聖', phase:'Ph.3'},
-      {name:'', phase:'Pre'},
-      {name:'', phase:'Pre'},
-      {name:'', phase:'Pre'},
-    ]
-  },
-  '土曜14時': {
-    students: [
-      {name:'粕谷優晴', phase:'Ph.3'},
-      {name:'粕谷智晴', phase:'Ph.4'},
-      {name:'武藤那由多', phase:'中級'},
-      {name:'奥井柊宇',   phase:'中級'},
-      {name:'', phase:'Pre'},
-    ]
-  },
-  '土曜15時': {
-    students: [
-      {name:'柴田菫花',   phase:'中級'},
-      {name:'小林幹汰',   phase:'Ph.4'},
-      {name:'宮﨑丸琳',   phase:'Ph.4'},
-      {name:'山口隼也人', phase:'Ph.4'},
-      {name:'', phase:'Pre'},
-    ]
-  },
-  '土曜17時': {
-    students: [
-      {name:'神谷有理',   phase:'Ph.4'},
-      {name:'越前大和',   phase:'Ph.4'},
-      {name:'山田楽',     phase:'Ph.4'},
-      {name:'越前春翔',   phase:'Ph.4'},
-      {name:'工藤樹',     phase:'Ph.4'},
-    ]
-  },
-  '土曜18時': {
-    students: [
-      {name:'安藤一美',   phase:'Ph.5'},
-      {name:'色摩龍之介', phase:'Ph.4'},
-      {name:'上村啓十',   phase:'Ph.3'},
-      {name:'日下万里花', phase:'Ph.4'},
-      {name:'大澤みのり', phase:'Ph.4'},
-    ]
-  },
-  '土曜19時': {
-    students: [
-      {name:'井上弦音', phase:'中級'},
-      {name:'涌井旭陽', phase:'中級'},
-      {name:'滝澤安悟', phase:'中級'},
-      {name:'', phase:'Pre'},
-      {name:'', phase:'Pre'},
-    ]
-  },
-  '土曜20時': {
-    students: [
-      {name:'依田知笑里', phase:'Ph.4'},
-      {name:'中山理枝子', phase:'Ph.3'},
-      {name:'', phase:'Pre'},
-      {name:'', phase:'Pre'},
-      {name:'', phase:'Pre'},
-    ]
-  },
-};
+// ---- Class Presets (loaded from Google Sheets) ----
+let CLASS_PRESETS = {};
+
+async function loadMasterData() {
+  return new Promise((resolve) => {
+    const callbackName = 'masterCallback_' + Date.now();
+    const timeout = setTimeout(() => {
+      delete window[callbackName];
+      const s = document.getElementById('master-script');
+      if (s) s.remove();
+      console.warn('マスターデータの読み込みタイムアウト');
+      resolve();
+    }, 10000);
+
+    window[callbackName] = function(data) {
+      clearTimeout(timeout);
+      delete window[callbackName];
+      const s = document.getElementById('master-script');
+      if (s) s.remove();
+      if (data.status === 'ok') {
+        CLASS_PRESETS = data.classes || {};
+        populateClassSelectors();
+      }
+      resolve();
+    };
+
+    const script = document.createElement('script');
+    script.id = 'master-script';
+    script.src = GAS_READ_URL + '?action=master&callback=' + callbackName;
+    document.head.appendChild(script);
+    script.onerror = () => {
+      clearTimeout(timeout);
+      resolve();
+    };
+  });
+}
+
+function populateClassSelectors() {
+  const classNames = Object.keys(CLASS_PRESETS).sort();
+
+  // 入力タブのクラス選択
+  const sel = document.getElementById('class-select');
+  sel.innerHTML = '<option value="">── クラスを選択 ──</option>';
+  classNames.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  });
+
+  // 確認タブのクラス選択
+  const reviewSel = document.getElementById('review-class-select');
+  if (reviewSel) {
+    reviewSel.innerHTML = '<option value="">── クラスを選択 ──</option>';
+    classNames.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      reviewSel.appendChild(opt);
+    });
+  }
+}
 
 // ---- Skill hints ----
 const SKILL_HINTS = [
@@ -791,7 +769,7 @@ const SKILL_HINTS = [
 ];
 
 // ---- Init ----
-const PHASES = ['Pre','Ph.1','Ph.2','Ph.3','Ph.4','Ph.5','Ph.6','中級'];
+const PHASES = ['体験','Pre','Ph.1','Ph.2','Ph.3','Ph.4','Ph.5','Ph.6','中級'];
 const STUDENT_COUNT = 5;
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxmk_cJykap1VztRTAxnaEH5Wb7xF12TXK65nVE6bWtEB6EXsFisHGm2k1TKvnUTjzQ/exec';
 const GAS_READ_URL = GAS_URL;
@@ -811,14 +789,8 @@ function init() {
     today.toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric',weekday:'short'});
   document.getElementById('lesson-date').value = today.toISOString().split('T')[0];
 
-  // Class selector
-  const sel = document.getElementById('class-select');
-  Object.keys(CLASS_PRESETS).forEach(name => {
-    const opt = document.createElement('option');
-    opt.value = name;
-    opt.textContent = name;
-    sel.appendChild(opt);
-  });
+  // Load master data from Google Sheets
+  loadMasterData();
 
   // Build student cards
   const grid = document.getElementById('students-grid');
@@ -861,13 +833,27 @@ function populateSkillSelects() {
 function loadPreset(selectEl) {
   const key = selectEl.value;
   if (!key) return;
-  const preset = CLASS_PRESETS[key];
+  const students = CLASS_PRESETS[key];
+  if (!students) return;
   document.getElementById('class-name').value = key;
-  preset.students.forEach((s, i) => {
+
+  // 全生徒スロットをリセット
+  for (let i = 1; i <= STUDENT_COUNT; i++) {
+    document.getElementById(`s${i}_name`).value = '';
+    document.getElementById(`s${i}_phase`).value = 'Pre';
+    // bodyを閉じる
+    const body = document.getElementById(`body-${i}`);
+    const btn = document.getElementById(`toggle-${i}`);
+    if (body) body.classList.remove('open');
+    if (btn) btn.textContent = '＋';
+  }
+
+  // 生徒データを入れる
+  students.forEach((s, i) => {
+    if (i >= STUDENT_COUNT) return;
     const idx = i + 1;
     document.getElementById(`s${idx}_name`).value = s.name;
-    const phaseEl = document.getElementById(`s${idx}_phase`);
-    phaseEl.value = s.phase;
+    document.getElementById(`s${idx}_phase`).value = s.phase;
   });
 }
 
@@ -1250,14 +1236,7 @@ function switchTab(name) {
 }
 
 function populateReviewClassSelect() {
-  const sel = document.getElementById('review-class-select');
-  if (sel.children.length > 1) return;
-  Object.keys(CLASS_PRESETS).forEach(name => {
-    const opt = document.createElement('option');
-    opt.value = name;
-    opt.textContent = name;
-    sel.appendChild(opt);
-  });
+  // handled by populateClassSelectors() on master load
 }
 
 // ---- Load review data from GAS ----
