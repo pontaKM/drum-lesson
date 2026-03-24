@@ -680,7 +680,6 @@
   <!-- Run -->
   <button class="run-btn" id="run-btn" onclick="runAI()">▶ AI判断を実行</button>
   <div class="error-msg" id="error-msg"></div>
-  <div id="save-status" style="display:none;margin-top:10px;font-size:12px;font-family:'Space Mono',monospace;text-align:center;"></div>
 
   <!-- Loading -->
   <div class="loading" id="loading">
@@ -709,6 +708,12 @@
     <!-- Summary -->
     <div class="section-label" style="margin-top:20px;">クラス全体まとめ</div>
     <div class="action-box" id="summary-box" style="border-left-color: var(--text3);"></div>
+
+    <button class="run-btn" id="save-btn" onclick="saveWithOverrides()"
+      style="margin-top:20px;background:var(--text2);color:#fff;">
+      ✓ この内容でスプレッドシートに保存
+    </button>
+    <div id="save-status" style="display:none;margin-top:10px;font-size:12px;font-family:'Space Mono',monospace;text-align:center;"></div>
   </div>
 
 </div><!-- /tab-input -->
@@ -1196,19 +1201,9 @@ async function runAI() {
       throw new Error('AI出力のJSON解析に失敗しました。もう一度実行してください。');
     }
     renderOutput(result, data);
-    // 上書きデータを収集してresultに反映
-    result.students.forEach((s, idx) => {
-      const overrideRadio = document.querySelector(`input[name="override_hw_${idx}"]:checked`);
-      const overrideMemo = document.getElementById(`override_memo_${idx}`);
-      if (overrideRadio && overrideRadio.value !== 'ai') {
-        s.homework_override = overrideRadio.value === 'yes';
-        s.homework_overridden = true;
-      }
-      if (overrideMemo && overrideMemo.value) {
-        s.override_memo = overrideMemo.value;
-      }
-    });
-    await saveToSheet(data, result);
+    // AI結果をグローバルに保持（保存ボタン押下時に使う）
+    window._lastResult = result;
+    window._lastData = data;
 
   } catch (e) {
     showError('エラー：' + e.message);
@@ -1313,6 +1308,37 @@ function renderOutput(r, data) {
 
   document.getElementById('output-area').classList.add('visible');
   document.getElementById('output-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function saveWithOverrides() {
+  const result = window._lastResult;
+  const data = window._lastData;
+  if (!result || !data) {
+    showSaveStatus('先にAI判断を実行してください', true);
+    return;
+  }
+
+  // 上書きデータを収集
+  result.students.forEach((s, idx) => {
+    const overrideRadio = document.querySelector(`input[name="override_hw_${idx}"]:checked`);
+    const overrideMemo = document.getElementById(`override_memo_${idx}`);
+    if (overrideRadio && overrideRadio.value !== 'ai') {
+      s.homework_override = overrideRadio.value === 'yes';
+      s.homework_overridden = true;
+    } else {
+      s.homework_overridden = false;
+    }
+    if (overrideMemo && overrideMemo.value) {
+      s.override_memo = overrideMemo.value;
+    }
+  });
+
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.textContent = '保存中...';
+  await saveToSheet(data, result);
+  btn.textContent = '✓ この内容でスプレッドシートに保存';
+  btn.disabled = false;
 }
 
 async function saveToSheet(data, aiResult) {
