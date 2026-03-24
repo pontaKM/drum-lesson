@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ドラムレッスン管理</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #222222;
+    --border: #2e2e2e;
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --text: #f0f0f0;
+    --text2: #888;
+    --text3: #555;
+    --green: #4ade80;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+  .header-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .header-date {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  /* Layout */
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  /* Section */
+  .section {
+    margin-bottom: 32px;
+  }
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 12px;
+  }
+
+  /* Class info */
+  .class-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  /* Input */
+  input, textarea, select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--accent);
+  }
+  input::placeholder, textarea::placeholder {
+    color: var(--text3);
+  }
+  select option { background: var(--surface2); }
+
+  /* Student cards */
+  .students-grid {
+    display: grid;
+    gap: 12px;
+  }
+
+  .student-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .student-card:focus-within {
+    border-color: #3e3e3e;
+  }
+
+  .student-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--surface2);
+  }
+  .student-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    width: 20px;
+    flex-shrink: 0;
+  }
+  .student-name-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 0;
+  }
+  .student-name-input:focus { border: none; box-shadow: none; }
+
+  .student-phase {
+    width: 120px;
+    flex-shrink: 0;
+    background: var(--surface);
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+
+  .toggle-btn {
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 16px;
+    width: 24px;
+    text-align: center;
+    transition: color 0.15s;
+    flex-shrink: 0;
+  }
+  .toggle-btn:hover { color: var(--text); }
+
+  .student-body {
+    padding: 16px;
+    display: none;
+    border-top: 1px solid var(--border);
+  }
+  .student-body.open { display: block; }
+
+  .fields-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .field-group { display: flex; flex-direction: column; gap: 6px; }
+  .field-label {
+    font-size: 11px;
+    color: var(--text2);
+    font-weight: 500;
+  }
+
+  /* Slider */
+  .slider-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .slider-wrap input[type=range] {
+    flex: 1;
+    padding: 0;
+    height: 4px;
+    border: none;
+    accent-color: var(--accent);
+    background: var(--border);
+    cursor: pointer;
+  }
+  .slider-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    width: 16px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* API Key */
+  .apikey-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    margin-bottom: 24px;
+  }
+  .apikey-row label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    white-space: nowrap;
+    letter-spacing: 0.05em;
+  }
+  .apikey-row input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    padding: 0;
+  }
+
+  /* Run button */
+  .run-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: var(--radius);
+    padding: 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .run-btn:hover { opacity: 0.9; }
+  .run-btn:active { transform: scale(0.99); }
+  .run-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Output */
+  .output-area {
+    display: none;
+    margin-top: 32px;
+  }
+  .output-area.visible { display: block; }
+
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  /* Score card */
+  .score-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .score-total {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .score-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .score-badge.green { color: var(--green); }
+  .score-badge.yellow { color: var(--yellow); }
+  .score-badge.red { color: var(--red); }
+  .score-label {
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .score-judgment {
+    font-size: 18px;
+    margin-left: 4px;
+  }
+
+  .score-axes {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+  .axis-item {
+    background: var(--surface2);
+    border-radius: 6px;
+    padding: 10px 8px;
+    text-align: center;
+  }
+  .axis-label {
+    font-size: 10px;
+    color: var(--text3);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .axis-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  /* Common bar */
+  .common-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .common-stage {
+    display: flex;
+    gap: 6px;
+  }
+  .stage-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    transition: all 0.2s;
+  }
+  .stage-dot.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+    font-weight: 700;
+  }
+
+  /* Student result cards */
+  .result-cards { display: grid; gap: 10px; margin-bottom: 16px; }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .result-card-header {
+    padding: 12px 16px;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .result-name {
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .homework-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .homework-yes { background: rgba(232,255,71,0.15); color: var(--accent); border: 1px solid rgba(232,255,71,0.3); }
+  .homework-no { background: rgba(255,107,53,0.12); color: var(--accent2); border: 1px solid rgba(255,107,53,0.25); }
+
+  .result-card-body {
+    padding: 14px 16px;
+    display: grid;
+    gap: 10px;
+  }
+  .result-row { display: grid; gap: 4px; }
+  .result-row-label {
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: 'Space Mono', monospace;
+  }
+  .result-row-val {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* Action box */
+  .action-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  /* Loading */
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 48px 0;
+    color: var(--text2);
+  }
+  .loading.visible { display: block; }
+  .loading-dots {
+    font-family: 'Space Mono', monospace;
+    font-size: 24px;
+    letter-spacing: 0.3em;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+  .loading-text { margin-top: 12px; font-size: 12px; color: var(--text3); }
+
+  /* Error */
+  .error-msg {
+    display: none;
+    background: rgba(248,113,113,0.1);
+    border: 1px solid rgba(248,113,113,0.3);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    color: var(--red);
+    font-size: 13px;
+    margin-top: 12px;
+  }
+  .error-msg.visible { display: block; }
+
+  /* Divider */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text3);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--text2); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Review cards */
+  .review-class-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .review-class-header {
+    background: var(--surface2);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+  }
+  .review-class-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+  .review-class-meta {
+    font-size: 11px;
+    color: var(--text3);
+  }
+  .review-class-body {
+    display: none;
+    padding: 12px;
+  }
+  .review-class-body.open { display: block; }
+  .review-student-row {
+    background: var(--surface2);
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .review-student-name {
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .review-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .review-field { display: flex; flex-direction: column; gap: 2px; }
+  .review-field-label {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .review-field-val {
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .review-field-full {
+    grid-column: 1 / -1;
+  }
+  .burden-pill {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--surface);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-title">Drum Lesson</span>
+  <span class="header-date" id="today-date"></span>
+</div>
+
+<div class="container">
+
+  <!-- API Key -->
+  <div class="apikey-row">
+    <label>API KEY</label>
+    <input type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off">
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('input')">入力・AI判断</button>
+    <button class="tab-btn" onclick="switchTab('review')">前回の結果を確認</button>
+  </div>
+
+  <!-- Tab: Input -->
+  <div class="tab-content active" id="tab-input">
+
+  <!-- Class info -->
+  <div class="section">
+    <div class="section-label">クラス情報</div>
+    <div class="class-row" style="grid-template-columns:1fr 1fr 1fr;">
+      <select id="class-select" onchange="loadPreset(this)">
+        <option value="">── クラスを選択 ──</option>
+      </select>
+      <input type="text" id="class-name" placeholder="クラス名（手入力も可）">
+      <input type="date" id="lesson-date">
+    </div>
+  </div>
+
+  <!-- Students -->
+  <div class="section">
+    <div class="section-label">生徒データ</div>
+    <div class="students-grid" id="students-grid"></div>
+  </div>
+
+  <!-- Run -->
+  <button class="run-btn" id="run-btn" onclick="runAI()">▶ AI判断を実行</button>
+  <div class="error-msg" id="error-msg"></div>
+  <div id="save-status" style="display:none;margin-top:10px;font-size:12px;font-family:'Space Mono',monospace;text-align:center;"></div>
+
+  <!-- Loading -->
+  <div class="loading" id="loading">
+    <div class="loading-dots">···</div>
+    <div class="loading-text">Claude APIで処理中...</div>
+  </div>
+
+  <!-- Output -->
+  <div class="output-area" id="output-area">
+    <hr class="divider">
+    <div class="section-label">分析結果</div>
+
+    <!-- Score -->
+    <div class="score-card" id="score-card"></div>
+
+    <!-- Common -->
+    <div class="common-bar" id="common-bar"></div>
+
+    <!-- Action -->
+    <div class="action-box" id="action-box"></div>
+
+    <!-- Student results -->
+    <div class="section-label" style="margin-top:20px;">生徒ごとの次回プラン</div>
+    <div class="result-cards" id="result-cards"></div>
+
+    <!-- Summary -->
+    <div class="section-label" style="margin-top:20px;">クラス全体まとめ</div>
+    <div class="action-box" id="summary-box" style="border-left-color: var(--text3);"></div>
+  </div>
+
+</div><!-- /tab-input -->
+
+  <!-- Tab: Review -->
+  <div class="tab-content" id="tab-review">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div>
+        <select id="review-class-select" style="font-size:13px;width:200px;">
+          <option value="">── クラスを選択 ──</option>
+        </select>
+      </div>
+      <button onclick="loadReview()" style="background:var(--accent);color:#000;border:none;border-radius:var(--radius);padding:8px 20px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.1em;cursor:pointer;">読み込む</button>
+    </div>
+    <div id="review-loading" style="display:none;text-align:center;padding:32px;color:var(--text3);font-size:13px;">読み込み中...</div>
+    <div id="review-content"></div>
+  </div><!-- /tab-review -->
+
+</div><!-- /container -->
+
+<script>
+// ---- Class Presets (from lesson progress PDF) ----
+const CLASS_PRESETS = {
+  '土曜11時': {
+    students: [
+      {name:'麻生英一', phase:'Ph.4'},
+      {name:'森千紘',   phase:'Ph.4'},
+      {name:'岡村音色', phase:'Ph.2'},
+      {name:'宇都宮幸紀', phase:'Ph.3'},
+      {name:'青木奈美江', phase:'Ph.3'},
+    ]
+  },
+  '土曜12時': {
+    students: [
+      {name:'加藤淳之介', phase:'Ph.4'},
+      {name:'津村木蒔',   phase:'Ph.4'},
+      {name:'伊東幹大',   phase:'Ph.4'},
+      {name:'但木玄',     phase:'Ph.4'},
+      {name:'百瀬一慶',   phase:'Ph.2'},
+    ]
+  },
+  '土曜13時': {
+    students: [
+      {name:'蒔田鴻',   phase:'Ph.4'},
+      {name:'原田海聖', phase:'Ph.3'},
+      {name:'', phase:'Pre'},
+      {name:'', phase:'Pre'},
+      {name:'', phase:'Pre'},
+    ]
+  },
+  '土曜14時': {
+    students: [
+      {name:'粕谷優晴', phase:'Ph.3'},
+      {name:'粕谷智晴', phase:'Ph.4'},
+      {name:'武藤那由多', phase:'中級'},
+      {name:'奥井柊宇',   phase:'中級'},
+      {name:'', phase:'Pre'},
+    ]
+  },
+  '土曜15時': {
+    students: [
+      {name:'柴田菫花',   phase:'中級'},
+      {name:'小林幹汰',   phase:'Ph.4'},
+      {name:'宮﨑丸琳',   phase:'Ph.4'},
+      {name:'山口隼也人', phase:'Ph.4'},
+      {name:'', phase:'Pre'},
+    ]
+  },
+  '土曜17時': {
+    students: [
+      {name:'神谷有理',   phase:'Ph.4'},
+      {name:'越前大和',   phase:'Ph.4'},
+      {name:'山田楽',     phase:'Ph.4'},
+      {name:'越前春翔',   phase:'Ph.4'},
+      {name:'工藤樹',     phase:'Ph.4'},
+    ]
+  },
+  '土曜18時': {
+    students: [
+      {name:'安藤一美',   phase:'Ph.5'},
+      {name:'色摩龍之介', phase:'Ph.4'},
+      {name:'上村啓十',   phase:'Ph.3'},
+      {name:'日下万里花', phase:'Ph.4'},
+      {name:'大澤みのり', phase:'Ph.4'},
+    ]
+  },
+  '土曜19時': {
+    students: [
+      {name:'井上弦音', phase:'中級'},
+      {name:'涌井旭陽', phase:'中級'},
+      {name:'滝澤安悟', phase:'中級'},
+      {name:'', phase:'Pre'},
+      {name:'', phase:'Pre'},
+    ]
+  },
+  '土曜20時': {
+    students: [
+      {name:'依田知笑里', phase:'Ph.4'},
+      {name:'中山理枝子', phase:'Ph.3'},
+      {name:'', phase:'Pre'},
+      {name:'', phase:'Pre'},
+      {name:'', phase:'Pre'},
+    ]
+  },
+};
+
+// ---- Skill hints ----
+const SKILL_HINTS = [
+  {label:'Pre：キッズプリント（どんどんたん等）', value:'Pre キッズプリント'},
+  {label:'Ph.1：スティックの持ち方・基本フォーム', value:'Ph.1 フォーム'},
+  {label:'Ph.1：各楽器の叩き方（スネア・バスドラ・ハイハット）', value:'Ph.1 楽器の叩き方'},
+  {label:'Ph.2：きほんれんしゅう②（シンバルたいこ等）', value:'Ph.2 きほんれんしゅう②'},
+  {label:'Ph.2：8ビート基礎（テンポ60）', value:'SK-204 8ビートtemp60'},
+  {label:'Ph.2：8ビート基礎（テンポ80）', value:'SK-206 8ビートtemp80'},
+  {label:'Ph.2：曲に合わせて8ビート', value:'SK-207 曲+8ビート'},
+  {label:'Ph.3：8ビートバリエーション（バスドラパターン変化）', value:'Ph.3 バリエーション'},
+  {label:'Ph.4：フィルイン基本型（RLRL等）', value:'Ph.4 フィルイン基本型'},
+  {label:'Ph.4：4拍目フィルイン', value:'SK-403 4拍目フィルイン'},
+  {label:'Ph.4：3・4拍目フィルイン', value:'SK-405 3-4拍目フィルイン'},
+  {label:'Ph.5：フィルイン発展（1小節フィルイン）', value:'Ph.5 フィルイン発展'},
+  {label:'Ph.5：ハイハット オープン/クローズ', value:'Ph.5 HHオープン'},
+  {label:'Ph.6：クローズドリム/フラム/ブレイクショット', value:'Ph.6 特殊奏法'},
+  {label:'リズトレ（番号を入力）', value:'リズトレ No.'},
+  {label:'曲練習のみ', value:'曲練習'},
+];
+
+// ---- Init ----
+const PHASES = ['Pre','Ph.1','Ph.2','Ph.3','Ph.4','Ph.5','Ph.6','中級'];
+const STUDENT_COUNT = 5;
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxmk_cJykap1VztRTAxnaEH5Wb7xF12TXK65nVE6bWtEB6EXsFisHGm2k1TKvnUTjzQ/exec';
+const GAS_READ_URL = GAS_URL;
+
+function init() {
+  // Date
+  const today = new Date();
+  document.getElementById('today-date').textContent =
+    today.toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric',weekday:'short'});
+  document.getElementById('lesson-date').value = today.toISOString().split('T')[0];
+
+  // Class selector
+  const sel = document.getElementById('class-select');
+  Object.keys(CLASS_PRESETS).forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  });
+
+  // Build student cards
+  const grid = document.getElementById('students-grid');
+  for (let i = 1; i <= STUDENT_COUNT; i++) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = buildStudentCard(i);
+    grid.appendChild(tmp.firstElementChild);
+  }
+
+  populateSkillSelects();
+
+  // Slider events
+  document.querySelectorAll('input[type=range]').forEach(s => {
+    s.addEventListener('input', e => {
+      const id = e.target.id.replace('_slider','_val');
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = e.target.value;
+    });
+  });
+}
+
+function fillSkill(selectEl, i) {
+  if (!selectEl.value) return;
+  document.getElementById(`s${i}_skill`).value = selectEl.value;
+  selectEl.value = '';
+}
+
+function populateSkillSelects() {
+  document.querySelectorAll('[onchange^="fillSkill"]').forEach(sel => {
+    SKILL_HINTS.forEach(h => {
+      const opt = document.createElement('option');
+      opt.value = h.value;
+      opt.textContent = h.label;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+function loadPreset(selectEl) {
+  const key = selectEl.value;
+  if (!key) return;
+  const preset = CLASS_PRESETS[key];
+  document.getElementById('class-name').value = key;
+  preset.students.forEach((s, i) => {
+    const idx = i + 1;
+    document.getElementById(`s${idx}_name`).value = s.name;
+    const phaseEl = document.getElementById(`s${idx}_phase`);
+    phaseEl.value = s.phase;
+  });
+}
+
+function buildStudentCard(i) {
+  const sliders = [
+    {key:'mastery', label:'習熟度'},
+    {key:'practice', label:'練習度'},
+    {key:'motive', label:'モチベ'},
+    {key:'autonomy', label:'自律度'},
+    {key:'song_score', label:'曲完成度'},
+  ];
+
+  const sliderHTML = sliders.map(s => `
+    <div class="field-group">
+      <div class="field-label">${s.label}</div>
+      <div class="slider-wrap">
+        <input type="range" id="s${i}_${s.key}_slider" min="1" max="5" value="3">
+        <span class="slider-val" id="s${i}_${s.key}_val">3</span>
+      </div>
+    </div>`).join('');
+
+  const phaseOptions = PHASES.map(p =>
+    `<option value="${p}">${p}</option>`).join('');
+
+  return `
+  <div class="student-card" id="card-${i}">
+    <div class="student-header" onclick="toggleCard(${i})">
+      <span class="student-num">${i}</span>
+      <input class="student-name-input" type="text" id="s${i}_name"
+        placeholder="生徒名" onclick="event.stopPropagation()">
+      <select class="student-phase" id="s${i}_phase" onclick="event.stopPropagation()">
+        ${phaseOptions}
+      </select>
+      <button class="toggle-btn" id="toggle-${i}">＋</button>
+    </div>
+    <div class="student-body" id="body-${i}">
+      <div class="fields-grid">
+        <div class="field-group" style="grid-column:1/-1;">
+          <div class="field-label">今日やったスキル <span style="color:var(--text3);font-weight:400;">（下から選択 or 直接入力）</span></div>
+          <select onchange="fillSkill(this, ${i})" style="margin-bottom:6px;font-size:12px;color:var(--text2);">
+            <option value="">── スキルを選ぶ（注釈付き） ──</option>
+          </select>
+          <input type="text" id="s${i}_skill" placeholder="例：SK-204 8ビートtemp60 / 曲練習">
+        </div>
+        <div class="field-group">
+          <div class="field-label">今日やった曲</div>
+          <input type="text" id="s${i}_song" placeholder="曲名（なければ空欄）">
+        </div>
+        <div class="field-group">
+          <div class="field-label">今日やったセクション</div>
+          <input type="text" id="s${i}_song_section" placeholder="例：Aメロ・サビ・通し">
+        </div>
+        <div class="field-group">
+          <div class="field-label">何週目</div>
+          <select id="s${i}_song_weeks">
+            <option value="1">1週目</option>
+            <option value="2">2週目</option>
+            <option value="3">3週目</option>
+            <option value="4">4週目</option>
+            <option value="5〜8">5〜8週目</option>
+            <option value="9〜16">9〜16週目（2〜4ヶ月）</option>
+            <option value="17以上">17週以上（4ヶ月超）</option>
+          </select>
+        </div>
+        <div class="field-group" style="grid-column:1/-1;">
+          <div class="field-label" style="color:var(--text3);">次曲候補 <span style="font-weight:400;">（任意・変わったときだけ）</span></div>
+          <input type="text" id="s${i}_next_song" placeholder="検討中の曲名">
+        </div>
+        ${sliderHTML}
+        <div class="field-group" style="grid-column: 1/-1;">
+          <div class="field-label">メモ</div>
+          <input type="text" id="s${i}_memo" placeholder="任意">
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleCard(i) {
+  const body = document.getElementById(`body-${i}`);
+  const btn = document.getElementById(`toggle-${i}`);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  btn.textContent = isOpen ? '＋' : '－';
+}
+
+// ---- Collect Data ----
+function collectData() {
+  const className = document.getElementById('class-name').value || '未設定クラス';
+  const lessonDate = document.getElementById('lesson-date').value;
+
+  const students = [];
+  for (let i = 1; i <= STUDENT_COUNT; i++) {
+    const name = document.getElementById(`s${i}_name`).value.trim();
+    if (!name) continue;
+    students.push({
+      name,
+      phase: document.getElementById(`s${i}_phase`).value,
+      skill: document.getElementById(`s${i}_skill`).value || 'なし',
+      mastery: document.getElementById(`s${i}_mastery_slider`).value,
+      practice: document.getElementById(`s${i}_practice_slider`).value,
+      motive: document.getElementById(`s${i}_motive_slider`).value,
+      autonomy: document.getElementById(`s${i}_autonomy_slider`).value,
+      song: document.getElementById(`s${i}_song`).value || 'なし',
+      songSection: document.getElementById(`s${i}_song_section`).value || 'なし',
+      songWeeks: document.getElementById(`s${i}_song_weeks`).value,
+      nextSong: document.getElementById(`s${i}_next_song`).value || 'なし',
+      memo: document.getElementById(`s${i}_memo`).value || 'なし',
+    });
+  }
+  return { className, lessonDate, students };
+}
+
+// ---- Build Prompt ----
+function buildPrompt(data) {
+  const studentLines = data.students.map((s, idx) => `
+生徒${idx + 1}
+- 名前：${s.name}
+- 現在フェーズ：${s.phase}
+- 今日やったスキル：${s.skill}
+- 習熟度：${s.mastery} / 練習してきた度：${s.practice} / モチベーション：${s.motive} / 自律度：${s.autonomy}
+- 今日やった曲：${s.song}
+- 今日やったセクション：${s.songSection}
+- 何週目：${s.songWeeks}
+- 次曲候補：${s.nextSong}
+- メモ：${s.memo}`).join('\n');
+
+  return `あなたはドラム講師のアシスタントです。以下のレッスン記録をもとに判断してください。
+
+### 前提知識
+
+フェーズ：Pre→Ph.1（フォーム）→Ph.2（8ビート基礎★最重要）→Ph.3（バリエーション）→Ph.4（フィルイン入門）→Ph.5（フィルイン発展/ハイハット）→Ph.6（特殊奏法）→中級
+
+曲練習の指針：
+- セクション情報から状態を推測する（「通し」なら全体練習、セクション名なら部分練習）
+- 次曲候補がある場合は移行タイミングを判断する
+
+曲の継続期間による変更提案：
+- 集中力なし・モチベ低め（1〜2）：4週目あたりで曲変更を提案
+- 標準（モチベ3）：8〜10週目で変更を提案
+- 意欲が高い（モチベ4〜5）：16週以上継続もOK、本人が満足するまで
+
+課題判断ルール：
+- 練習度1〜2：課題なし（出しても意味がない）
+- 練習度3以上×習熟度低：同じ内容をもう一週
+- 練習度3以上×習熟度高：次ステップへ
+- モチベ1〜2：楽しさ優先、難度を下げる
+- 自律度4〜5：自主練の方向性を示す課題が有効
+- 自律度1〜2：課題を出さない
+
+グループ特性：1クラス5人・年齢もレベルもバラバラ。上手い子には1tips発展、遅れている子には復習案を。
+
+### 入力データ
+
+クラス名：${data.className}
+レッスン日：${data.lessonDate}
+${studentLines}
+
+### 出力形式（必ずJSONで返してください。前置きや説明文は不要）
+
+{
+  "score": {
+    "A": <0-5の整数>,
+    "A_comment": "<準備物の多さについて一言>",
+    "B": <0-5の整数>,
+    "B_comment": "<レベル差について一言>",
+    "C": <0-5の整数>,
+    "C_comment": "<曲バラバラ度について一言>",
+    "D": <0-5の整数>,
+    "D_comment": "<自律度の低さについて一言>",
+    "E": <0-5の整数>,
+    "E_comment": "<習熟度停滞について一言>",
+    "total": <合計0-25>,
+    "action": "<先生へのアクション提案1〜2文>"
+  },
+  "common": {
+    "stage": <0-4の整数>,
+    "proposal": "<共通化移行提案1〜2文>"
+  },
+  "students": [
+    {
+      "name": "<名前>",
+      "homework": <true/false>,
+      "homework_reason": "<理由一言>",
+      "next_lesson": "<次回教えること>",
+      "teaching_point": "<説明ポイント・比喩案>",
+      "tips": "<1tips発展案または復習案>",
+      "song_advice": "<曲練習の次のステップ（セクション・完成度目標・曲変更提案など）>"
+    }
+  ],
+  "summary": "<クラス全体まとめ1〜2文>"
+}`;
+}
+
+// ---- Call API ----
+async function runAI() {
+  const apiKey = document.getElementById('api-key').value.trim();
+  if (!apiKey) { showError('APIキーを入力してください'); return; }
+
+  const data = collectData();
+  if (data.students.length === 0) { showError('生徒名を1人以上入力してください'); return; }
+
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true;
+  document.getElementById('loading').classList.add('visible');
+  document.getElementById('output-area').classList.remove('visible');
+  document.getElementById('error-msg').classList.remove('visible');
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: buildPrompt(data) }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+
+    const json = await res.json();
+    const text = json.content.map(b => b.text || '').join('');
+
+    // JSONブロックを抽出してクリーニング
+    let clean = text;
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) clean = jsonMatch[0];
+    clean = clean
+      .replace(/```json|```/g, '')
+      .replace(/,(\s*[}\]])/g, '$1')
+      .trim();
+
+    let result;
+    try {
+      result = JSON.parse(clean);
+    } catch(parseErr) {
+      // それでも失敗したらエラー詳細を表示
+      throw new Error('AI出力のJSON解析に失敗しました。もう一度実行してください。');
+    }
+    renderOutput(result, data);
+    await saveToSheet(data, result);
+
+  } catch (e) {
+    showError('エラー：' + e.message);
+  } finally {
+    btn.disabled = false;
+    document.getElementById('loading').classList.remove('visible');
+  }
+}
+
+// ---- Render ----
+function renderOutput(r, data) {
+  // Score
+  const total = r.score.total;
+  const colorClass = total <= 8 ? 'green' : total <= 16 ? 'yellow' : 'red';
+  const judgment = total <= 8 ? '🟢 低負担' : total <= 16 ? '🟡 中負担' : '🔴 高負担';
+
+  const axes = [
+    {key:'A', label:'準備物'},
+    {key:'B', label:'レベル差'},
+    {key:'C', label:'曲バラバラ'},
+    {key:'D', label:'自律度低'},
+    {key:'E', label:'停滞'},
+  ];
+
+  document.getElementById('score-card').innerHTML = `
+    <div class="score-total">
+      <span class="score-badge ${colorClass}">${total}</span>
+      <span class="score-label">/ 25</span>
+      <span class="score-judgment">${judgment}</span>
+    </div>
+    <div class="score-axes">
+      ${axes.map(a => `
+        <div class="axis-item" title="${r.score[a.key + '_comment']}">
+          <div class="axis-label">${a.label}</div>
+          <div class="axis-val">${r.score[a.key]}</div>
+        </div>`).join('')}
+    </div>`;
+
+  // Common
+  const stage = r.common.stage;
+  const stageLabels = ['全員バラバラ','2人で1曲','複数組','1〜2曲','全員1曲'];
+  document.getElementById('common-bar').innerHTML = `
+    <div>
+      <div class="section-label" style="margin-bottom:8px;">曲の共通化</div>
+      <div class="common-stage">
+        ${[0,1,2,3,4].map(n => `<div class="stage-dot ${n === stage ? 'active' : ''}">${n}</div>`).join('')}
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--text2);max-width:60%;line-height:1.6;">${r.common.proposal}</div>`;
+
+  // Action
+  document.getElementById('action-box').textContent = r.score.action;
+
+  // Students
+  document.getElementById('result-cards').innerHTML = r.students.map(s => `
+    <div class="result-card">
+      <div class="result-card-header">
+        <span class="result-name">${s.name}</span>
+        <span class="homework-badge ${s.homework ? 'homework-yes' : 'homework-no'}">
+          ${s.homework ? '課題あり' : '課題なし'}
+        </span>
+      </div>
+      <div class="result-card-body">
+        <div class="result-row">
+          <div class="result-row-label">理由</div>
+          <div class="result-row-val">${s.homework_reason}</div>
+        </div>
+        <div class="result-row">
+          <div class="result-row-label">次回教えること</div>
+          <div class="result-row-val">${s.next_lesson}</div>
+        </div>
+        <div class="result-row">
+          <div class="result-row-label">説明ポイント</div>
+          <div class="result-row-val">${s.teaching_point}</div>
+        </div>
+        <div class="result-row">
+          <div class="result-row-label">発展 / 復習案</div>
+          <div class="result-row-val">${s.tips}</div>
+        </div>
+        ${s.song_advice ? `
+        <div class="result-row" style="border-top:1px solid var(--border);padding-top:10px;margin-top:2px;">
+          <div class="result-row-label" style="color:var(--accent2);">🎵 曲練習アドバイス</div>
+          <div class="result-row-val">${s.song_advice}</div>
+        </div>` : ''}
+      </div>
+    </div>`).join('');
+
+  // Summary
+  document.getElementById('summary-box').textContent = r.summary;
+
+  document.getElementById('output-area').classList.add('visible');
+  document.getElementById('output-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function saveToSheet(data, aiResult) {
+  try {
+    const payload = JSON.stringify({ ...data, aiResult });
+    // GASはno-corsだとリダイレクトを追えないためフォーム送信方式で回避
+    const form = new FormData();
+    form.append('payload', payload);
+    await fetch(GAS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: form
+    });
+    showSaveStatus('✓ スプレッドシートに保存しました');
+  } catch(e) {
+    showSaveStatus('保存に失敗しました: ' + e.message, true);
+  }
+}
+
+function showSaveStatus(msg, isError = false) {
+  const el = document.getElementById('save-status');
+  el.textContent = msg;
+  el.style.color = isError ? 'var(--red)' : 'var(--green)';
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+// ---- Tab switching ----
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+    const tabName = ['input','review'][i];
+    btn.classList.toggle('active', tabName === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(el => {
+    el.classList.toggle('active', el.id === 'tab-' + name);
+  });
+  if (name === 'review') populateReviewClassSelect();
+}
+
+function populateReviewClassSelect() {
+  const sel = document.getElementById('review-class-select');
+  if (sel.children.length > 1) return;
+  Object.keys(CLASS_PRESETS).forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  });
+}
+
+// ---- Load review data from GAS ----
+async function loadReview() {
+  const className = document.getElementById('review-class-select').value;
+  if (!className) { alert('クラスを選択してください'); return; }
+
+  document.getElementById('review-loading').style.display = 'block';
+  document.getElementById('review-content').innerHTML = '';
+
+  try {
+    // POSTでreadアクションを送信（CORSを回避するためFormData使用）
+    const form = new FormData();
+    form.append('payload', JSON.stringify({ action: 'read', className: className }));
+
+    await fetch(GAS_READ_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: form
+    });
+
+    // no-corsでは返答が読めないため、少し待ってからスプレッドシートAPIで取得
+    // 代替：Claude APIを使ってスプシのデータを取得する
+    await loadReviewViaClaudeAPI(className);
+
+  } catch(e) {
+    document.getElementById('review-content').innerHTML =
+      '<div style="color:var(--red);font-size:13px;padding:16px;">読み込みエラー：' + e.message + '</div>';
+    document.getElementById('review-loading').style.display = 'none';
+  }
+}
+
+async function loadReviewViaClaudeAPI(className) {
+  // GASのread用エンドポイントをClaude API経由で呼ぶのではなく
+  // スプレッドシートのデータをGASから直接JSONPで取得する方式に変更
+  // scriptタグを使ったJSONP方式でCORSを回避
+  const callbackName = 'gasCallback_' + Date.now();
+
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      cleanup();
+      document.getElementById('review-loading').style.display = 'none';
+      document.getElementById('review-content').innerHTML =
+        '<div style="color:var(--red);font-size:13px;padding:16px;">タイムアウトしました。もう一度試してください。</div>';
+      reject(new Error('timeout'));
+    }, 15000);
+
+    window[callbackName] = function(data) {
+      cleanup();
+      if (data.status === 'error') {
+        document.getElementById('review-content').innerHTML =
+          '<div style="color:var(--red);font-size:13px;padding:16px;">エラー：' + data.message + '</div>';
+      } else {
+        renderReview(data.data, className);
+      }
+      document.getElementById('review-loading').style.display = 'none';
+      resolve();
+    };
+
+    function cleanup() {
+      clearTimeout(timeout);
+      delete window[callbackName];
+      const s = document.getElementById('jsonp-script');
+      if (s) s.remove();
+    }
+
+    const script = document.createElement('script');
+    script.id = 'jsonp-script';
+    script.src = GAS_READ_URL + '?action=read&class=' + encodeURIComponent(className) + '&callback=' + callbackName;
+    document.head.appendChild(script);
+    script.onerror = () => {
+      cleanup();
+      document.getElementById('review-loading').style.display = 'none';
+      document.getElementById('review-content').innerHTML =
+        '<div style="color:var(--red);font-size:13px;padding:16px;">読み込みに失敗しました。</div>';
+      reject(new Error('script error'));
+    };
+  });
+}
+
+function renderReview(rows, className) {
+  if (!rows || rows.length === 0) {
+    document.getElementById('review-content').innerHTML =
+      '<div style="color:var(--text3);font-size:13px;padding:16px;">データがありません</div>';
+    return;
+  }
+
+  // Group by student, get latest record per student
+  const studentMap = {};
+  rows.forEach(row => {
+    const name = row['生徒名'];
+    if (!name) return;
+    if (!studentMap[name] || row['記録日時'] > studentMap[name]['記録日時']) {
+      studentMap[name] = row;
+    }
+  });
+
+  // Get latest lesson date and burden score
+  const latestDate = rows[rows.length - 1]['レッスン日'] || '';
+  const burdenScore = rows[rows.length - 1]['クラス負担度'] || '-';
+  const commonStage = rows[rows.length - 1]['共通化段階'] || '-';
+  const burdenColor = burdenScore <= 8 ? 'var(--green)' : burdenScore <= 16 ? 'var(--yellow)' : 'var(--red)';
+
+  let html = `
+    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+      <div class="score-card" style="flex:1;min-width:200px;padding:14px 16px;">
+        <div class="section-label" style="margin-bottom:6px;">前回レッスン日</div>
+        <div style="font-family:'Space Mono',monospace;font-size:16px;color:var(--text);">${latestDate}</div>
+      </div>
+      <div class="score-card" style="flex:1;min-width:200px;padding:14px 16px;">
+        <div class="section-label" style="margin-bottom:6px;">クラス負担度</div>
+        <div style="font-family:'Space Mono',monospace;font-size:24px;font-weight:700;color:${burdenColor};">${burdenScore}<span style="font-size:12px;color:var(--text3);font-weight:400;"> / 25</span></div>
+      </div>
+      <div class="score-card" style="flex:1;min-width:200px;padding:14px 16px;">
+        <div class="section-label" style="margin-bottom:6px;">曲の共通化段階</div>
+        <div style="font-family:'Space Mono',monospace;font-size:24px;font-weight:700;color:var(--text);">${commonStage}<span style="font-size:12px;color:var(--text3);font-weight:400;"> / 4</span></div>
+      </div>
+    </div>
+    <div class="section-label" style="margin-bottom:10px;">生徒ごとの前回結果</div>`;
+
+  Object.values(studentMap).forEach(row => {
+    const homework = row['課題'] || '-';
+    const hwColor = homework === '出す' ? 'var(--accent)' : 'var(--accent2)';
+    html += `
+    <div class="review-student-row">
+      <div class="review-student-name">
+        <span>${row['生徒名']}</span>
+        <span style="font-family:'Space Mono',monospace;font-size:10px;color:${hwColor};border:1px solid ${hwColor};padding:2px 8px;border-radius:4px;">課題${homework}</span>
+      </div>
+      <div class="review-fields">
+        <div class="review-field">
+          <div class="review-field-label">フェーズ</div>
+          <div class="review-field-val">${row['フェーズ'] || '-'}</div>
+        </div>
+        <div class="review-field">
+          <div class="review-field-label">曲（セクション）</div>
+          <div class="review-field-val">${row['曲名'] || '-'}${row['セクション'] ? ' / ' + row['セクション'] : ''}</div>
+        </div>
+        <div class="review-field review-field-full">
+          <div class="review-field-label">次回教えること</div>
+          <div class="review-field-val">${row['次回教えること'] || '-'}</div>
+        </div>
+        <div class="review-field review-field-full">
+          <div class="review-field-label">説明ポイント</div>
+          <div class="review-field-val">${row['説明ポイント'] || '-'}</div>
+        </div>
+        <div class="review-field review-field-full">
+          <div class="review-field-label">曲アドバイス</div>
+          <div class="review-field-val">${row['曲アドバイス'] || '-'}</div>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('review-content').innerHTML = html;
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+
+init();
+</script>
+</body>
+</html>
