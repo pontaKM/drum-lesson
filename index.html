@@ -592,7 +592,7 @@
   <!-- API Key -->
   <div class="apikey-row">
     <label>API KEY</label>
-    <input type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off">
+    <input type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off" oninput="localStorage.setItem('drumApiKey', this.value)">
   </div>
 
   <!-- Tabs -->
@@ -787,6 +787,10 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbxmk_cJykap1VztRTAxnaEH
 const GAS_READ_URL = GAS_URL;
 
 function init() {
+  // Load saved API key
+  const savedKey = localStorage.getItem('drumApiKey');
+  if (savedKey) document.getElementById('api-key').value = savedKey;
+
   // Date
   const today = new Date();
   document.getElementById('today-date').textContent =
