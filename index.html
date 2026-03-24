@@ -983,13 +983,13 @@ function loadPreset(selectEl) {
     document.getElementById(`s${idx}_name`).value = s.name;
     document.getElementById(`s${idx}_phase`).value = s.phase;
 
-    // 前回の曲を自動入力
+    // 前回の曲と週数を自動入力
     const songKey = key + '___' + s.name;
     const lastSong = LAST_SONGS[songKey];
     if (lastSong && lastSong.song) {
       document.getElementById(`s${idx}_song`).value = lastSong.song;
+      document.getElementById(`s${idx}_song_weeks`).value = lastSong.weeks ? lastSong.weeks + '週目' : '';
     }
-    // 次曲候補欄は削除済み
   });
 }
 
@@ -1034,25 +1034,19 @@ function buildStudentCard(i) {
           </select>
           <input type="text" id="s${i}_skill" placeholder="例：SK-204 8ビートtemp60 / 曲練習">
         </div>
-        <div class="field-group">
-          <div class="field-label">今日やった曲</div>
-          <input type="text" id="s${i}_song" placeholder="曲名（なければ空欄）">
-        </div>
-        <div class="field-group">
+        <div class="field-group" style="grid-column:1/-1;">
           <div class="field-label">今日やったセクション</div>
-          <input type="text" id="s${i}_song_section" placeholder="例：Aメロ・サビ・通し">
+          <input type="text" id="s${i}_song_section" placeholder="例：Aメロ・サビ・通し・本日終わり">
         </div>
-        <div class="field-group">
-          <div class="field-label">何週目</div>
-          <select id="s${i}_song_weeks">
-            <option value="1">1週目</option>
-            <option value="2">2週目</option>
-            <option value="3">3週目</option>
-            <option value="4">4週目</option>
-            <option value="5〜8">5〜8週目</option>
-            <option value="9〜16">9〜16週目（2〜4ヶ月）</option>
-            <option value="17以上">17週以上（4ヶ月超）</option>
-          </select>
+        <div style="grid-column:1/-1;display:flex;gap:12px;align-items:center;padding:4px 0;">
+          <span style="font-size:11px;color:var(--text3);">曲：</span>
+          <input type="text" id="s${i}_song" readonly
+            style="flex:1;font-size:12px;color:var(--text3);background:transparent;border:none;padding:0;cursor:default;"
+            placeholder="前回の曲が自動入力されます">
+          <span style="font-size:11px;color:var(--text3);white-space:nowrap;">週数：</span>
+          <input type="text" id="s${i}_song_weeks" readonly
+            style="width:60px;font-size:12px;color:var(--text3);background:transparent;border:none;padding:0;cursor:default;"
+            placeholder="自動">
         </div>
 
         ${sliderHTML}
@@ -1092,7 +1086,7 @@ function collectData() {
       autonomy: document.getElementById(`s${i}_autonomy_slider`).value,
       song: document.getElementById(`s${i}_song`).value || 'なし',
       songSection: document.getElementById(`s${i}_song_section`).value || 'なし',
-      songWeeks: document.getElementById(`s${i}_song_weeks`).value,
+      songWeeks: document.getElementById(`s${i}_song_weeks`).value || '自動',
       memo: document.getElementById(`s${i}_memo`).value || 'なし',
     });
   }
