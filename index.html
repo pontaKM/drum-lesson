@@ -94,8 +94,8 @@
     border-radius: var(--radius);
     color: var(--text);
     font-family: 'Noto Sans JP', sans-serif;
-    font-size: 14px;
-    padding: 10px 12px;
+    font-size: 16px;
+    padding: 12px 14px;
     outline: none;
     transition: border-color 0.15s;
   }
@@ -103,7 +103,7 @@
     border-color: var(--accent);
   }
   input::placeholder, textarea::placeholder {
-    color: var(--text3);
+    color: #666;
   }
   select option { background: var(--surface2); }
 
@@ -128,10 +128,11 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 16px;
+    padding: 14px 16px;
     cursor: pointer;
     user-select: none;
     background: var(--surface2);
+    min-height: 56px;
   }
   .student-num {
     font-family: 'Space Mono', monospace;
@@ -144,18 +145,20 @@
     flex: 1;
     background: transparent;
     border: none;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 15px;
+    font-weight: 700;
     padding: 0;
+    color: var(--text);
+    min-width: 0;
   }
   .student-name-input:focus { border: none; box-shadow: none; }
 
   .student-phase {
-    width: 120px;
+    width: 110px;
     flex-shrink: 0;
     background: var(--surface);
-    font-size: 12px;
-    padding: 6px 8px;
+    font-size: 13px;
+    padding: 8px;
   }
 
   .toggle-btn {
@@ -163,9 +166,12 @@
     border: none;
     color: var(--text3);
     cursor: pointer;
-    font-size: 16px;
-    width: 24px;
-    text-align: center;
+    font-size: 22px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: color 0.15s;
     flex-shrink: 0;
   }
@@ -187,7 +193,7 @@
 
   .field-group { display: flex; flex-direction: column; gap: 6px; }
   .field-label {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text2);
     font-weight: 500;
   }
@@ -201,7 +207,7 @@
   .slider-wrap input[type=range] {
     flex: 1;
     padding: 0;
-    height: 4px;
+    height: 6px;
     border: none;
     accent-color: var(--accent);
     background: var(--border);
@@ -209,9 +215,9 @@
   }
   .slider-val {
     font-family: 'Space Mono', monospace;
-    font-size: 13px;
+    font-size: 16px;
     color: var(--accent);
-    width: 16px;
+    width: 20px;
     text-align: right;
     flex-shrink: 0;
   }
@@ -250,9 +256,9 @@
     color: #000;
     border: none;
     border-radius: var(--radius);
-    padding: 14px;
+    padding: 18px;
     font-family: 'Space Mono', monospace;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -590,9 +596,13 @@
 <div class="container">
 
   <!-- API Key -->
-  <div class="apikey-row">
+  <div class="apikey-row" id="apikey-row">
     <label>API KEY</label>
     <input type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off" oninput="localStorage.setItem('drumApiKey', this.value)">
+    <button onclick="toggleApiKey()" id="apikey-toggle" style="background:none;border:none;color:var(--text3);font-size:11px;font-family:'Space Mono',monospace;cursor:pointer;white-space:nowrap;">隠す</button>
+  </div>
+  <div id="apikey-saved" style="display:none;font-family:'Space Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:16px;cursor:pointer;" onclick="showApiKey()">
+    🔑 APIキー設定済み <span style="color:var(--accent);text-decoration:underline;">変更</span>
   </div>
 
   <!-- Tabs -->
@@ -789,7 +799,11 @@ const GAS_READ_URL = GAS_URL;
 function init() {
   // Load saved API key
   const savedKey = localStorage.getItem('drumApiKey');
-  if (savedKey) document.getElementById('api-key').value = savedKey;
+  if (savedKey) {
+    document.getElementById('api-key').value = savedKey;
+    document.getElementById('apikey-row').style.display = 'none';
+    document.getElementById('apikey-saved').style.display = 'block';
+  }
 
   // Date
   const today = new Date();
@@ -1399,6 +1413,19 @@ function renderReview(rows, className) {
   });
 
   document.getElementById('review-content').innerHTML = html;
+}
+
+function toggleApiKey() {
+  const input = document.getElementById('api-key');
+  const row = document.getElementById('apikey-row');
+  row.style.display = 'none';
+  document.getElementById('apikey-saved').style.display = 'block';
+}
+
+function showApiKey() {
+  document.getElementById('apikey-row').style.display = 'flex';
+  document.getElementById('apikey-saved').style.display = 'none';
+  document.getElementById('api-key').focus();
 }
 
 function showError(msg) {
