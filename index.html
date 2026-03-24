@@ -823,7 +823,29 @@ let TRANSFER_DATA = []; // 振替予定データ
 let LAST_SONGS = {}; // 各生徒の前回曲名
 
 async function loadMasterData() {
-  await Promise.all([loadClassMaster(), loadTransferData(), loadLastSongs()]);
+  // キャッシュから即時表示
+  const cached = localStorage.getItem('drumMasterCache');
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached);
+      if (parsed.classes) {
+        CLASS_PRESETS = parsed.classes;
+        populateClassSelectors();
+      }
+      if (parsed.transfers) TRANSFER_DATA = parsed.transfers;
+      if (parsed.songs) LAST_SONGS = parsed.songs;
+    } catch(e) {}
+  }
+
+  // バックグラウンドで最新データを取得・更新
+  Promise.all([loadClassMaster(), loadTransferData(), loadLastSongs()]).then(() => {
+    localStorage.setItem('drumMasterCache', JSON.stringify({
+      classes: CLASS_PRESETS,
+      transfers: TRANSFER_DATA,
+      songs: LAST_SONGS,
+      updated: Date.now()
+    }));
+  });
 }
 
 async function loadClassMaster() {
