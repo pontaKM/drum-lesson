@@ -1473,6 +1473,12 @@ async function saveWithOverrides() {
   btn.disabled = false;
 }
 
+function clearTaskCache(className) {
+  try {
+    localStorage.removeItem('drumTaskCache_' + className);
+  } catch(e) {}
+}
+
 async function saveToSheet(data, aiResult) {
   try {
     const payload = JSON.stringify({ ...data, aiResult });
@@ -1484,6 +1490,7 @@ async function saveToSheet(data, aiResult) {
       mode: 'no-cors',
       body: form
     });
+    clearTaskCache(data.className);
     showSaveStatus('✓ スプレッドシートに保存しました');
   } catch(e) {
     showSaveStatus('保存に失敗しました: ' + e.message, true);
@@ -1874,6 +1881,37 @@ function buildBadges(className) {
 }
 
 async function fetchClassData(className) {
+  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  const cacheKey = 'drumTaskCache_' + className;
+
+  // キャッシュ確認（1週間以内なら即返す）
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Date.now() - parsed.ts < WEEK_MS) {
+        // バックグラウンドで更新
+        fetchClassDataFromGAS(className).then(rows => {
+          if (rows.length > 0) {
+            localStorage.setItem(cacheKey, JSON.stringify({data: rows, ts: Date.now()}));
+          }
+        });
+        return parsed.data;
+      }
+    }
+  } catch(e) {}
+
+  // キャッシュなし → GASから取得
+  const rows = await fetchClassDataFromGAS(className);
+  if (rows.length > 0) {
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify({data: rows, ts: Date.now()}));
+    } catch(e) {}
+  }
+  return rows;
+}
+
+async function fetchClassDataFromGAS(className) {
   return new Promise((resolve) => {
     const callbackName = 'classCallback_' + Date.now() + '_' + Math.random().toString(36).slice(2);
     const scriptId = 'class-script-' + callbackName;
