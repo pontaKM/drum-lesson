@@ -1263,7 +1263,7 @@ function renderOutput(r, data) {
   document.getElementById('action-box').textContent = r.score.action;
 
   // Students
-  document.getElementById('result-cards').innerHTML = r.students.map(s => `
+  document.getElementById('result-cards').innerHTML = r.students.map((s, idx) => `
     <div class="result-card">
       <div class="result-card-header">
         <span class="result-name">${s.name}</span>
