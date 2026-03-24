@@ -589,6 +589,68 @@
     background: var(--surface);
   }
 
+  /* Day buttons */
+  .day-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text2);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    padding: 8px 24px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+  .day-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 700;
+  }
+
+  /* Task cards */
+  .task-class-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .task-class-header {
+    background: var(--surface2);
+    padding: 10px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border);
+  }
+  .task-student-row {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    gap: 4px;
+  }
+  .task-student-row:last-child { border-bottom: none; }
+  .task-student-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .task-next {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.5;
+  }
+  .task-song {
+    font-size: 11px;
+    color: var(--text3);
+  }
+
   /* Override */
   .override-box {
     background: var(--surface2);
@@ -664,6 +726,7 @@
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('input')">入力・AI判断</button>
     <button class="tab-btn" onclick="switchTab('review')">次回の準備</button>
+    <button class="tab-btn" onclick="switchTab('tasks')">今週の準備</button>
   </div>
 
   <!-- Tab: Input -->
@@ -740,6 +803,16 @@
     <div id="review-loading" style="display:none;text-align:center;padding:32px;color:var(--text3);font-size:13px;">読み込み中...</div>
     <div id="review-content"></div>
   </div><!-- /tab-review -->
+
+  <!-- Tab: Tasks -->
+  <div class="tab-content" id="tab-tasks">
+    <div style="display:flex;gap:8px;margin-bottom:20px;">
+      <button class="day-btn active" id="day-fri" onclick="switchDay('fri')">金曜</button>
+      <button class="day-btn" id="day-sat" onclick="switchDay('sat')">土曜</button>
+    </div>
+    <div id="tasks-loading" style="display:none;text-align:center;padding:32px;color:var(--text3);font-size:13px;">読み込み中...</div>
+    <div id="tasks-content"></div>
+  </div><!-- /tab-tasks -->
 
 </div><!-- /container -->
 
@@ -1406,13 +1479,14 @@ function showSaveStatus(msg, isError = false) {
 // ---- Tab switching ----
 function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach((btn, i) => {
-    const tabName = ['input','review'][i];
+    const tabName = ['input','review','tasks'][i];
     btn.classList.toggle('active', tabName === name);
   });
   document.querySelectorAll('.tab-content').forEach(el => {
     el.classList.toggle('active', el.id === 'tab-' + name);
   });
   if (name === 'review') populateReviewClassSelect();
+  if (name === 'tasks') renderTasks(currentDay);
 }
 
 function populateReviewClassSelect() {
@@ -1664,6 +1738,144 @@ function showApiKey() {
   document.getElementById('apikey-row').style.display = 'flex';
   document.getElementById('apikey-saved').style.display = 'none';
   document.getElementById('api-key').focus();
+}
+
+// ---- Tasks tab ----
+let currentDay = 'fri';
+
+function switchDay(day) {
+  currentDay = day;
+  document.getElementById('day-fri').classList.toggle('active', day === 'fri');
+  document.getElementById('day-sat').classList.toggle('active', day === 'sat');
+  renderTasks(day);
+}
+
+async function renderTasks(day) {
+  const prefix = day === 'fri' ? '金曜' : '土曜';
+  const classes = Object.keys(CLASS_PRESETS)
+    .filter(c => c.startsWith(prefix))
+    .sort();
+
+  if (classes.length === 0) {
+    document.getElementById('tasks-content').innerHTML =
+      '<div style="color:var(--text3);font-size:13px;padding:16px;">クラスデータがありません</div>';
+    return;
+  }
+
+  document.getElementById('tasks-loading').style.display = 'block';
+  document.getElementById('tasks-content').innerHTML = '';
+
+  // 全クラス分のデータを並列取得
+  const results = await Promise.all(classes.map(className => fetchClassData(className)));
+
+  document.getElementById('tasks-loading').style.display = 'none';
+
+  let html = '';
+  classes.forEach((className, i) => {
+    const rows = results[i];
+    const students = CLASS_PRESETS[className] || [];
+
+    // 体験・振替バッジ
+    const badges = buildBadges(className);
+
+    // 生徒ごとの最新データ
+    const studentMap = {};
+    if (rows && rows.length > 0) {
+      rows.forEach(row => {
+        const name = row['生徒名'];
+        if (!name) return;
+        if (!studentMap[name] || row['記録日時'] > studentMap[name]['記録日時']) {
+          studentMap[name] = row;
+        }
+      });
+    }
+
+    const studentRows = students
+      .filter(s => s.phase !== '体験')
+      .map(s => {
+        const row = studentMap[s.name] || {};
+        const homework = row['課題上書き'] || row['課題'] || '';
+        const hwBadge = homework === '出す'
+          ? `<span style="font-size:10px;color:var(--accent);border:1px solid var(--accent);padding:1px 6px;border-radius:4px;font-family:'Space Mono',monospace;">課題あり</span>`
+          : '';
+        const nextLesson = row['次回教えること'] || '';
+        const song = row['曲名'] || LAST_SONGS[className + '___' + s.name]?.song || '';
+        const weeks = LAST_SONGS[className + '___' + s.name]?.weeks || '';
+        const overrideMemo = row['上書きメモ'] || '';
+
+        return `<div class="task-student-row">
+          <div class="task-student-name">
+            ${s.name} ${hwBadge}
+          </div>
+          ${nextLesson ? `<div class="task-next">${nextLesson}</div>` : ''}
+          ${overrideMemo ? `<div class="task-next" style="color:var(--accent2);">📝 ${overrideMemo}</div>` : ''}
+          ${song ? `<div class="task-song">🎵 ${song}${weeks ? ' ' + weeks + '週目' : ''}</div>` : ''}
+        </div>`;
+      }).join('');
+
+    html += `<div class="task-class-card">
+      <div class="task-class-header">${className}</div>
+      ${badges}
+      ${studentRows || '<div class="task-student-row"><div class="task-song">記録なし</div></div>'}
+    </div>`;
+  });
+
+  document.getElementById('tasks-content').innerHTML = html;
+}
+
+function buildBadges(className) {
+  let html = '';
+
+  // 振替バッジ
+  const transfers = TRANSFER_DATA.filter(t => t.className === className);
+  transfers.forEach(t => {
+    const dateStr = t.date
+      ? new Date(t.date).toLocaleDateString('ja-JP', {month:'long', day:'numeric', weekday:'short'})
+      : '日程未定';
+    html += `<div style="padding:8px 14px;background:rgba(74,110,56,0.08);border-bottom:1px solid var(--border);font-size:12px;color:var(--accent);">
+      🔄 振替：${t.name}　${dateStr}　${t.originalClass ? t.originalClass + 'から' : ''}
+    </div>`;
+  });
+
+  // 体験バッジ
+  const trials = (CLASS_PRESETS[className] || []).filter(s => s.phase === '体験');
+  trials.forEach(s => {
+    const dateStr = s.lessonDate
+      ? new Date(s.lessonDate).toLocaleDateString('ja-JP', {month:'long', day:'numeric', weekday:'short'})
+      : '日程未定';
+    html += `<div style="padding:8px 14px;background:rgba(184,94,34,0.08);border-bottom:1px solid var(--border);font-size:12px;color:var(--accent2);">
+      🔔 体験：${s.name}　${dateStr}${s.note ? '　' + s.note : ''}　キッズプリント準備
+    </div>`;
+  });
+
+  return html;
+}
+
+async function fetchClassData(className) {
+  return new Promise((resolve) => {
+    const callbackName = 'classCallback_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    const scriptId = 'class-script-' + callbackName;
+    const timeout = setTimeout(() => {
+      delete window[callbackName];
+      const s = document.getElementById(scriptId);
+      if (s) s.remove();
+      resolve([]);
+    }, 10000);
+
+    window[callbackName] = function(data) {
+      clearTimeout(timeout);
+      delete window[callbackName];
+      const s = document.getElementById(scriptId);
+      if (s) s.remove();
+      resolve(data.status === 'ok' ? data.data : []);
+    };
+
+    const script = document.createElement('script');
+    script.id = scriptId;
+    script.src = GAS_READ_URL + '?action=read&class=' + encodeURIComponent(className) + '&callback=' + callbackName;
+    document.head.appendChild(script);
+    script.onerror = () => { clearTimeout(timeout); resolve([]); };
+  });
 }
 
 function showError(msg) {
