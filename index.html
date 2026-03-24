@@ -819,7 +819,7 @@
     <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
       <button class="day-btn active" id="input-day-fri" onclick="filterInputDay('金曜')">金曜</button>
       <button class="day-btn" id="input-day-sat" onclick="filterInputDay('土曜')">土曜</button>
-      <input type="date" id="lesson-date" style="flex:1;margin-left:8px;">
+      <input type="date" id="lesson-date" style="flex:1;margin-left:8px;" onchange="autoSelectDay(this.value)">
     </div>
     <div id="class-btn-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px;"></div>
     <select id="class-select" onchange="loadPreset(this)" style="display:none;">
@@ -1033,6 +1033,13 @@ async function loadLastSongs() {
 }
 
 let currentInputDay = localStorage.getItem('drumLastDay') || '金曜';
+
+function autoSelectDay(dateStr) {
+  if (!dateStr) return;
+  const dow = new Date(dateStr).getDay(); // 0=日,1=月...5=金,6=土
+  if (dow === 5) filterInputDay('金曜');
+  else if (dow === 6) filterInputDay('土曜');
+}
 
 function filterInputDay(day) {
   currentInputDay = day;
