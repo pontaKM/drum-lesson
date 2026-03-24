@@ -580,6 +580,52 @@
     background: var(--surface);
   }
 
+  /* Override */
+  .override-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-top: 8px;
+  }
+  .override-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .override-label {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .override-radio {
+    display: flex;
+    gap: 12px;
+  }
+  .override-radio label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .override-radio input[type=radio] {
+    width: auto;
+    border: none;
+    padding: 0;
+    accent-color: var(--accent);
+  }
+  .override-memo {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+
   /* Scrollbar */
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
@@ -1150,6 +1196,18 @@ async function runAI() {
       throw new Error('AI出力のJSON解析に失敗しました。もう一度実行してください。');
     }
     renderOutput(result, data);
+    // 上書きデータを収集してresultに反映
+    result.students.forEach((s, idx) => {
+      const overrideRadio = document.querySelector(`input[name="override_hw_${idx}"]:checked`);
+      const overrideMemo = document.getElementById(`override_memo_${idx}`);
+      if (overrideRadio && overrideRadio.value !== 'ai') {
+        s.homework_override = overrideRadio.value === 'yes';
+        s.homework_overridden = true;
+      }
+      if (overrideMemo && overrideMemo.value) {
+        s.override_memo = overrideMemo.value;
+      }
+    });
     await saveToSheet(data, result);
 
   } catch (e) {
@@ -1235,6 +1293,18 @@ function renderOutput(r, data) {
           <div class="result-row-label" style="color:var(--accent2);">🎵 曲練習アドバイス</div>
           <div class="result-row-val">${s.song_advice}</div>
         </div>` : ''}
+        <div class="override-box">
+          <div class="override-row">
+            <span class="override-label">課題 上書き</span>
+            <div class="override-radio">
+              <label><input type="radio" name="override_hw_${idx}" value="ai" checked> AIのまま</label>
+              <label><input type="radio" name="override_hw_${idx}" value="yes"> 出す</label>
+              <label><input type="radio" name="override_hw_${idx}" value="no"> 出さない</label>
+            </div>
+          </div>
+          <input type="text" class="override-memo" id="override_memo_${idx}"
+            placeholder="メモ（例：楽譜を渡す・次回確認）">
+        </div>
       </div>
     </div>`).join('');
 
@@ -1486,8 +1556,12 @@ function renderReview(rows, className) {
     <div class="review-student-row">
       <div class="review-student-name">
         <span>${row['生徒名']}</span>
-        <span style="font-family:'Space Mono',monospace;font-size:10px;color:${hwColor};border:1px solid ${hwColor};padding:2px 8px;border-radius:4px;">課題${homework}</span>
+        ${row['課題上書き']
+          ? `<span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--accent2);border:1px solid var(--accent2);padding:2px 8px;border-radius:4px;">上書:${row['課題上書き']}</span>`
+          : `<span style="font-family:'Space Mono',monospace;font-size:10px;color:${hwColor};border:1px solid ${hwColor};padding:2px 8px;border-radius:4px;">課題${homework}</span>`
+        }
       </div>
+      ${row['上書きメモ'] ? `<div style="font-size:12px;color:var(--accent2);margin-bottom:6px;padding:0 2px;">📝 ${row['上書きメモ']}</div>` : ''}
       <div class="review-fields">
         <div class="review-field">
           <div class="review-field-label">フェーズ</div>
