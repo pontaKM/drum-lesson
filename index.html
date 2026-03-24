@@ -608,7 +608,7 @@
   <!-- Tabs -->
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('input')">入力・AI判断</button>
-    <button class="tab-btn" onclick="switchTab('review')">前回の結果を確認</button>
+    <button class="tab-btn" onclick="switchTab('review')">次回の準備</button>
   </div>
 
   <!-- Tab: Input -->
@@ -840,15 +840,23 @@ function loadPreset(selectEl) {
   for (let i = 1; i <= STUDENT_COUNT; i++) {
     document.getElementById(`s${i}_name`).value = '';
     document.getElementById(`s${i}_phase`).value = 'Pre';
-    // bodyを閉じる
     const body = document.getElementById(`body-${i}`);
     const btn = document.getElementById(`toggle-${i}`);
     if (body) body.classList.remove('open');
     if (btn) btn.textContent = '＋';
   }
 
-  // 生徒データを入れる
-  students.forEach((s, i) => {
+  // 今日の日付
+  const todayStr = document.getElementById('lesson-date').value;
+
+  // 体験生徒は当日のみ表示、通常生徒は常に表示
+  const visibleStudents = students.filter(s => {
+    if (s.phase !== '体験') return true;
+    if (!s.lessonDate) return false;
+    return s.lessonDate === todayStr;
+  });
+
+  visibleStudents.forEach((s, i) => {
     if (i >= STUDENT_COUNT) return;
     const idx = i + 1;
     document.getElementById(`s${idx}_name`).value = s.name;
@@ -1318,17 +1326,23 @@ async function loadReviewViaClaudeAPI(className) {
 
 function renderReview(rows, className) {
   if (!rows || rows.length === 0) {
-    const trialStudents = CLASS_PRESETS[className]
-      ? CLASS_PRESETS[className].filter(s => s.phase === '体験').map(s => s.name)
+    const allTrialStudents2 = CLASS_PRESETS[className]
+      ? CLASS_PRESETS[className].filter(s => s.phase === '体験')
       : [];
-    const trialBadge = trialStudents.length > 0
-      ? `<div style="background:rgba(184,94,34,0.12);border:1px solid var(--accent2);border-radius:6px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
-          <span style="font-size:18px;">🔔</span>
-          <div>
-            <div style="font-weight:700;color:var(--accent2);font-size:13px;">体験生徒あり</div>
-            <div style="font-size:12px;color:var(--text2);margin-top:2px;">${trialStudents.join('・')}（キッズプリントを準備）</div>
-          </div>
-         </div>`
+    const trialBadge = allTrialStudents2.length > 0
+      ? allTrialStudents2.map(s => {
+          const dateStr = s.lessonDate
+            ? new Date(s.lessonDate).toLocaleDateString('ja-JP', {month:'long', day:'numeric', weekday:'short'})
+            : '日程未定';
+          const noteStr = s.note ? `・${s.note}` : '';
+          return `<div style="background:rgba(184,94,34,0.12);border:1px solid var(--accent2);border-radius:6px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:18px;">🔔</span>
+            <div>
+              <div style="font-weight:700;color:var(--accent2);font-size:13px;">体験予定：${s.name}</div>
+              <div style="font-size:12px;color:var(--text2);margin-top:2px;">${dateStr}${noteStr}　キッズプリントを準備</div>
+            </div>
+          </div>`;
+        }).join('')
       : '';
     document.getElementById('review-content').innerHTML =
       trialBadge + '<div style="color:var(--text3);font-size:13px;padding:8px 0;">レッスン記録はまだありません</div>';
@@ -1351,18 +1365,25 @@ function renderReview(rows, className) {
   const commonStage = rows[rows.length - 1]['共通化段階'] || '-';
   const burdenColor = burdenScore <= 8 ? 'var(--green)' : burdenScore <= 16 ? 'var(--yellow)' : 'var(--red)';
 
-  // 体験生徒チェック
-  const trialStudents = CLASS_PRESETS[className]
-    ? CLASS_PRESETS[className].filter(s => s.phase === '体験').map(s => s.name)
+  // 体験生徒チェック（予定日付き）
+  const allTrialStudents = CLASS_PRESETS[className]
+    ? CLASS_PRESETS[className].filter(s => s.phase === '体験')
     : [];
-  const trialBadge = trialStudents.length > 0
-    ? `<div style="background:rgba(184,94,34,0.12);border:1px solid var(--accent2);border-radius:6px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
-        <span style="font-size:18px;">🔔</span>
-        <div>
-          <div style="font-weight:700;color:var(--accent2);font-size:13px;">体験生徒あり</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:2px;">${trialStudents.join('・')}（キッズプリントを準備）</div>
-        </div>
-       </div>`
+
+  const trialBadge = allTrialStudents.length > 0
+    ? allTrialStudents.map(s => {
+        const dateStr = s.lessonDate
+          ? new Date(s.lessonDate).toLocaleDateString('ja-JP', {month:'long', day:'numeric', weekday:'short'})
+          : '日程未定';
+        const noteStr = s.note ? `・${s.note}` : '';
+        return `<div style="background:rgba(184,94,34,0.12);border:1px solid var(--accent2);border-radius:6px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:18px;">🔔</span>
+          <div>
+            <div style="font-weight:700;color:var(--accent2);font-size:13px;">体験予定：${s.name}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px;">${dateStr}${noteStr}　キッズプリントを準備</div>
+          </div>
+        </div>`;
+      }).join('')
     : '';
 
   let html = trialBadge + `
