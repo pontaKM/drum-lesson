@@ -589,6 +589,65 @@
     background: var(--surface);
   }
 
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open {
+    display: flex;
+  }
+  .modal-sheet {
+    background: var(--surface);
+    border-radius: 16px 16px 0 0;
+    width: 100%;
+    max-width: 640px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .modal-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: var(--text3);
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+  }
+  .modal-row {
+    margin-bottom: 12px;
+  }
+  .modal-row-label {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .modal-row-val {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
   /* Day buttons */
   .day-btn {
     background: var(--surface);
@@ -815,6 +874,17 @@
   </div><!-- /tab-tasks -->
 
 </div><!-- /container -->
+
+<!-- Student detail modal -->
+<div class="modal-overlay" id="student-modal" onclick="closeModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <span class="modal-name" id="modal-name"></span>
+      <button class="modal-close" onclick="closeStudentModal()">×</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
 
 <script>
 // ---- Class Presets (loaded from Google Sheets) ----
@@ -1819,10 +1889,16 @@ async function renderTasks(day) {
       });
     }
 
+    // 行データをwindowに保存（モーダル用）
+    if (!window._taskRows) window._taskRows = {};
+
     const studentRows = students
       .filter(s => s.phase !== '体験')
       .map(s => {
         const row = studentMap[s.name] || {};
+        const rowKey = className + '___' + s.name;
+        window._taskRows[rowKey] = row;
+
         const homework = row['課題上書き'] || row['課題'] || '';
         const hwBadge = homework === '出す'
           ? `<span style="font-size:10px;color:var(--accent);border:1px solid var(--accent);padding:1px 6px;border-radius:4px;font-family:'Space Mono',monospace;">課題あり</span>`
@@ -1832,9 +1908,11 @@ async function renderTasks(day) {
         const weeks = LAST_SONGS[className + '___' + s.name]?.weeks || '';
         const overrideMemo = row['上書きメモ'] || '';
 
-        return `<div class="task-student-row">
+        return `<div class="task-student-row" style="cursor:pointer;"
+          onclick="openStudentModal('${s.name}', window._taskRows['${rowKey}'])">
           <div class="task-student-name">
             ${s.name} ${hwBadge}
+            <span style="font-size:11px;color:var(--text3);margin-left:auto;">›</span>
           </div>
           ${nextLesson ? `<div class="task-next">${nextLesson}</div>` : ''}
           ${overrideMemo ? `<div class="task-next" style="color:var(--accent2);">📝 ${overrideMemo}</div>` : ''}
@@ -1850,6 +1928,37 @@ async function renderTasks(day) {
   });
 
   document.getElementById('tasks-content').innerHTML = html;
+}
+
+function openStudentModal(name, row) {
+  document.getElementById('modal-name').textContent = name;
+  const homework = row['課題上書き'] || row['課題'] || '-';
+  const hwColor = homework === '出す' ? 'var(--accent)' : 'var(--accent2)';
+
+  const fields = [
+    {label: '課題', val: homework, color: hwColor},
+    {label: '次回教えること', val: row['次回教えること'] || '-'},
+    {label: '説明ポイント', val: row['説明ポイント'] || '-'},
+    {label: '発展 / 復習案', val: row['発展/復習案'] || '-'},
+    {label: '曲アドバイス', val: row['曲アドバイス'] || '-'},
+    {label: '上書きメモ', val: row['上書きメモ'] || '-'},
+  ].filter(f => f.val && f.val !== '-' && f.val !== 'なし');
+
+  document.getElementById('modal-body').innerHTML = fields.map(f => `
+    <div class="modal-row">
+      <div class="modal-row-label">${f.label}</div>
+      <div class="modal-row-val" style="${f.color ? 'color:' + f.color : ''}">${f.val}</div>
+    </div>`).join('') || '<div style="color:var(--text3);font-size:13px;">記録がまだありません</div>';
+
+  document.getElementById('student-modal').classList.add('open');
+}
+
+function closeStudentModal() {
+  document.getElementById('student-modal').classList.remove('open');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('student-modal')) closeStudentModal();
 }
 
 function buildBadges(className) {
