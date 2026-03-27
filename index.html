@@ -1938,6 +1938,32 @@ function renderReview(rows, className) {
           <div class="review-field-label">曲アドバイス</div>
           <div class="review-field-val">${row['曲アドバイス'] || '-'}</div>
         </div>
+        <div class="review-field review-field-full" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;">
+          <div class="review-field-label" style="margin-bottom:4px;">前回の入力値</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            ${[
+              {label:'習熟度', key:'習熟度'},
+              {label:'練習度', key:'練習度'},
+              {label:'モチベ', key:'モチベ'},
+              {label:'自律度', key:'自律度'},
+            ].map(f => {
+              const val = row[f.key];
+              if (!val) return '';
+              const color = val >= 4 ? 'var(--green)' : val <= 2 ? 'var(--red)' : 'var(--yellow)';
+              return `<span style="font-size:11px;color:var(--text3);">${f.label}：<span style="color:${color};font-weight:700;font-family:'Space Mono',monospace;">${val}</span></span>`;
+            }).join('')}
+          </div>
+        </div>
+        ${row['スキル'] && row['スキル'] !== 'なし' ? `
+        <div class="review-field review-field-full">
+          <div class="review-field-label">前回のスキル</div>
+          <div class="review-field-val">${row['スキル']}</div>
+        </div>` : ''}
+        ${row['メモ'] && row['メモ'] !== 'なし' ? `
+        <div class="review-field review-field-full">
+          <div class="review-field-label">前回のメモ</div>
+          <div class="review-field-val">${row['メモ']}</div>
+        </div>` : ''}
       </div>
     </div>`;
   });
