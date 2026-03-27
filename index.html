@@ -1214,8 +1214,9 @@ function loadPreset(selectEl) {
   // 今日の日付
   const todayStr = document.getElementById('lesson-date').value;
 
-  // 体験生徒は当日のみ表示、通常生徒は常に表示
+  // 体験生徒は当日のみ表示、お休み生徒は除外、通常生徒は常に表示
   const visibleStudents = students.filter(s => {
+    if (s.absent) return false;
     if (s.phase !== '体験') return true;
     if (!s.lessonDate) return false;
     return s.lessonDate === todayStr;
@@ -1975,15 +1976,19 @@ async function renderTasks(day) {
         const weeks = LAST_SONGS[className + '___' + s.name]?.weeks || '';
         const overrideMemo = row['上書きメモ'] || '';
 
-        return `<div class="task-student-row" style="cursor:pointer;"
+        const absentBadge = s.absent
+          ? `<span style="font-size:10px;color:var(--text3);border:1px solid var(--border);padding:1px 6px;border-radius:4px;font-family:'Space Mono',monospace;">今週休み</span>`
+          : '';
+
+        return `<div class="task-student-row" style="cursor:pointer;${s.absent ? 'opacity:0.45;' : ''}"
           onclick="openStudentModal('${s.name}', window._taskRows['${rowKey}'])">
           <div class="task-student-name">
-            ${s.name} ${hwBadge}
+            ${s.name} ${absentBadge} ${hwBadge}
             <span style="font-size:11px;color:var(--text3);margin-left:auto;">›</span>
           </div>
-          ${nextLesson ? `<div class="task-next">${nextLesson}</div>` : ''}
-          ${overrideMemo ? `<div class="task-next" style="color:var(--accent2);">📝 ${overrideMemo}</div>` : ''}
-          ${song ? `<div class="task-song">🎵 ${song}${weeks ? ' ' + weeks + '週目' : ''}</div>` : ''}
+          ${!s.absent && nextLesson ? `<div class="task-next">${nextLesson}</div>` : ''}
+          ${!s.absent && overrideMemo ? `<div class="task-next" style="color:var(--accent2);">📝 ${overrideMemo}</div>` : ''}
+          ${!s.absent && song ? `<div class="task-song">🎵 ${song}${weeks ? ' ' + weeks + '週目' : ''}</div>` : ''}
         </div>`;
       }).join('');
 
