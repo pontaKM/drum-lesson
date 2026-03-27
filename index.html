@@ -1116,22 +1116,67 @@ function populateClassSelectors() {
 }
 
 const SKILL_HINTS = [
-  {label:'Pre：キッズプリント（どんどんたん等）', value:'Pre キッズプリント'},
-  {label:'Ph.1：スティックの持ち方・基本フォーム', value:'Ph.1 フォーム'},
-  {label:'Ph.1：各楽器の叩き方（スネア・バスドラ・ハイハット）', value:'Ph.1 楽器の叩き方'},
-  {label:'Ph.2：きほんれんしゅう②（シンバルたいこ等）', value:'Ph.2 きほんれんしゅう②'},
-  {label:'Ph.2：8ビート基礎（テンポ60）', value:'SK-204 8ビートtemp60'},
-  {label:'Ph.2：8ビート基礎（テンポ80）', value:'SK-206 8ビートtemp80'},
-  {label:'Ph.2：曲に合わせて8ビート', value:'SK-207 曲+8ビート'},
-  {label:'Ph.3：8ビートバリエーション（バスドラパターン変化）', value:'Ph.3 バリエーション'},
-  {label:'Ph.4：フィルイン基本型（RLRL等）', value:'Ph.4 フィルイン基本型'},
-  {label:'Ph.4：4拍目フィルイン', value:'SK-403 4拍目フィルイン'},
-  {label:'Ph.4：3・4拍目フィルイン', value:'SK-405 3-4拍目フィルイン'},
-  {label:'Ph.5：フィルイン発展（1小節フィルイン）', value:'Ph.5 フィルイン発展'},
-  {label:'Ph.5：ハイハット オープン/クローズ', value:'Ph.5 HHオープン'},
-  {label:'Ph.6：クローズドリム/フラム/ブレイクショット', value:'Ph.6 特殊奏法'},
-  {label:'リズトレ（番号を入力）', value:'リズトレ No.'},
-  {label:'曲練習のみ', value:'曲練習'},
+  // Pre・初級
+  {label:'─── Pre / 初級 ───', value:'', disabled: true},
+  {label:'Pre：キッズプリント（どんどんたん等）',            value:'Pre キッズプリント'},
+  {label:'Ph.1：スティックの持ち方・基本フォーム',           value:'Ph.1 フォーム'},
+  {label:'Ph.1：各楽器の叩き方（スネア・バスドラ・HH）',     value:'Ph.1 楽器の叩き方'},
+  {label:'Ph.2：きほんれんしゅう②',                         value:'Ph.2 きほんれんしゅう②'},
+  {label:'Ph.2：8ビート基礎（テンポ60）',                    value:'Ph.2 8ビートtemp60'},
+  {label:'Ph.2：8ビート基礎（テンポ80）',                    value:'Ph.2 8ビートtemp80'},
+  {label:'Ph.3：8ビートバリエーション',                      value:'Ph.3 バリエーション'},
+  {label:'Ph.4：フィルイン基本型',                           value:'Ph.4 フィルイン基本型'},
+  {label:'Ph.5：フィルイン発展・HHオープン',                 value:'Ph.5 フィルイン発展'},
+  {label:'Ph.6：特殊奏法（リム・フラム・ブレイク）',          value:'Ph.6 特殊奏法'},
+  {label:'リズトレ（番号を入力）',                           value:'リズトレ No.'},
+
+  // 中級：練習項目
+  {label:'─── 中級：練習項目 ───', value:'', disabled: true},
+  {label:'中級：シェイクビート',                             value:'中級 シェイクビート'},
+  {label:'中級：16ビート（両手）',                           value:'中級 16ビート両手'},
+  {label:'中級：16ビート（片手）',                           value:'中級 16ビート片手'},
+  {label:'中級：16ビート（バウンス）',                       value:'中級 16ビートバウンス'},
+  {label:'中級：メトロノーム練習',                           value:'中級 メトロノーム練習'},
+  {label:'中級：ロック系リズム',                             value:'中級 ロック系リズム'},
+  {label:'中級：裏打ち（ダンス・ディスコ・etc）',            value:'中級 裏打ち'},
+  {label:'中級：3連系ビート',                                value:'中級 3連系ビート'},
+  {label:'中級：シャッフルビート',                           value:'中級 シャッフル'},
+  {label:'中級：16分音符のフットワーク①',                   value:'中級 フットワーク①'},
+  {label:'中級：16分音符のフットワーク②',                   value:'中級 フットワーク②'},
+  {label:'中級：足のダブルストローク',                       value:'中級 足ダブルストローク'},
+  {label:'中級：ツーバス・ツインペダル①',                   value:'中級 ツーバス①'},
+  {label:'中級：ツーバス・ツインペダル②',                   value:'中級 ツーバス②'},
+  {label:'中級：フィルインの発展',                           value:'中級 フィルイン発展'},
+  {label:'中級：1拍半のフレーズ',                            value:'中級 1拍半フレーズ'},
+
+  // 中級：基礎練習
+  {label:'─── 中級：基礎練習 ───', value:'', disabled: true},
+  {label:'中級：ダブルストロークの叩き方',                   value:'中級 ダブルストローク'},
+  {label:'中級：パラディドルの叩き方',                       value:'中級 パラディドル'},
+  {label:'中級：ルーディメンツ',                             value:'中級 ルーディメンツ'},
+  {label:'中級：右手左手に特化したエクササイズ',             value:'中級 左右エクササイズ'},
+  {label:'中級：右足に特化したエクササイズ',                 value:'中級 右足エクササイズ'},
+  {label:'中級：左足に特化したエクササイズ',                 value:'中級 左足エクササイズ'},
+  {label:'中級：手足のコンビネーション',                     value:'中級 手足コンビ'},
+  {label:'中級：ファットバック',                             value:'中級 ファットバック'},
+  {label:'中級：ダイナミクス',                               value:'中級 ダイナミクス'},
+  {label:'中級：リーディング',                               value:'中級 リーディング'},
+
+  // 中級：音楽ジャンル
+  {label:'─── 中級：音楽ジャンル ───', value:'', disabled: true},
+  {label:'中級：ジャズ（Jazz）のリズム',                    value:'中級 ジャズ'},
+  {label:'中級：ブラジルのリズム',                           value:'中級 ブラジル'},
+  {label:'中級：ラテンのリズム',                             value:'中級 ラテン'},
+  {label:'中級：その他のリズム',                             value:'中級 その他リズム'},
+
+  // 中級：アンサンブル
+  {label:'─── 中級：アンサンブル ───', value:'', disabled: true},
+  {label:'中級：二重奏・三重奏',                             value:'中級 二重奏三重奏'},
+  {label:'中級：パーカッションアンサンブル',                 value:'中級 パーカッションアンサンブル'},
+
+  // 共通
+  {label:'─── 共通 ───', value:'', disabled: true},
+  {label:'曲練習のみ',                                       value:'曲練習'},
 ];
 
 const PHASES = ['体験','Pre','Ph.1','Ph.2','Ph.3','Ph.4','Ph.5','Ph.6','中級'];
@@ -1189,6 +1234,11 @@ function populateSkillSelects() {
       const opt = document.createElement('option');
       opt.value = h.value;
       opt.textContent = h.label;
+      if (h.disabled) {
+        opt.disabled = true;
+        opt.style.color = 'var(--text3)';
+        opt.style.fontWeight = '700';
+      }
       sel.appendChild(opt);
     });
   });
