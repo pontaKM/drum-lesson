@@ -2085,6 +2085,10 @@ function switchDay(day) {
 }
 
 async function renderTasks(day) {
+  // CONCERT_DATAが空なら読み込み直す
+  if (CONCERT_DATA.length === 0) {
+    await loadConcertData();
+  }
   const prefix = day === 'fri' ? '金曜' : '土曜';
   const classes = Object.keys(CLASS_PRESETS)
     .filter(c => c.startsWith(prefix))
