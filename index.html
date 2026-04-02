@@ -683,6 +683,43 @@
     font-weight: 700;
   }
 
+  /* Table view */
+  .prep-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 20px;
+  }
+  .prep-table th {
+    background: var(--surface2);
+    color: var(--text3);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+  }
+  .prep-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  .prep-table tr:hover td { background: var(--surface2); }
+  .prep-table tr.absent-row td { opacity: 0.4; }
+  .prep-table .class-header-row td {
+    background: var(--surface2);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
   /* Task cards */
   .task-class-card {
     background: var(--surface);
@@ -799,7 +836,6 @@
   <!-- Tabs -->
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('input')">入力・AI判断</button>
-    <button class="tab-btn" onclick="switchTab('review')">次回の準備</button>
     <button class="tab-btn" onclick="switchTab('tasks')">今週の準備</button>
   </div>
 
@@ -868,25 +904,17 @@
 
 </div><!-- /tab-input -->
 
-  <!-- Tab: Review -->
-  <div class="tab-content" id="tab-review">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-      <div>
-        <select id="review-class-select" style="font-size:13px;width:200px;">
-          <option value="">── クラスを選択 ──</option>
-        </select>
-      </div>
-      <button onclick="loadReview()" style="background:var(--accent);color:#000;border:none;border-radius:var(--radius);padding:8px 20px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.1em;cursor:pointer;">読み込む</button>
-    </div>
-    <div id="review-loading" style="display:none;text-align:center;padding:32px;color:var(--text3);font-size:13px;">読み込み中...</div>
-    <div id="review-content"></div>
-  </div><!-- /tab-review -->
-
   <!-- Tab: Tasks -->
   <div class="tab-content" id="tab-tasks">
-    <div style="display:flex;gap:8px;margin-bottom:20px;">
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
       <button class="day-btn active" id="day-fri" onclick="switchDay('fri')">金曜</button>
       <button class="day-btn" id="day-sat" onclick="switchDay('sat')">土曜</button>
+      <div style="margin-left:auto;display:flex;gap:4px;">
+        <button id="view-card-btn" onclick="switchView('card')"
+          style="background:var(--accent);color:#fff;border:none;border-radius:4px;padding:6px 12px;font-size:11px;font-family:'Space Mono',monospace;cursor:pointer;">カード</button>
+        <button id="view-table-btn" onclick="switchView('table')"
+          style="background:none;border:1px solid var(--border);border-radius:4px;padding:6px 12px;font-size:11px;font-family:'Space Mono',monospace;cursor:pointer;color:var(--text3);">テーブル</button>
+      </div>
     </div>
     <div id="tasks-loading" style="display:none;text-align:center;padding:32px;color:var(--text3);font-size:13px;">読み込み中...</div>
     <div id="tasks-content"></div>
@@ -1794,7 +1822,7 @@ function showSaveStatus(msg, isError = false) {
 
 function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach((btn, i) => {
-    const tabName = ['input','review','tasks'][i];
+    const tabName = ['input','tasks'][i];
     btn.classList.toggle('active', tabName === name);
   });
   document.querySelectorAll('.tab-content').forEach(el => {
@@ -2076,6 +2104,18 @@ function showApiKey() {
 }
 
 let currentDay = 'fri';
+let currentView = 'card';
+
+function switchView(view) {
+  currentView = view;
+  document.getElementById('view-card-btn').style.background = view === 'card' ? 'var(--accent)' : 'none';
+  document.getElementById('view-card-btn').style.color = view === 'card' ? '#fff' : 'var(--text3)';
+  document.getElementById('view-card-btn').style.border = view === 'card' ? 'none' : '1px solid var(--border)';
+  document.getElementById('view-table-btn').style.background = view === 'table' ? 'var(--accent)' : 'none';
+  document.getElementById('view-table-btn').style.color = view === 'table' ? '#fff' : 'var(--text3)';
+  document.getElementById('view-table-btn').style.border = view === 'table' ? 'none' : '1px solid var(--border)';
+  renderTasks(currentDay);
+}
 
 function switchDay(day) {
   currentDay = day;
@@ -2158,11 +2198,25 @@ async function renderTasks(day) {
             })()
           : '';
 
+        const hwCheckKey = 'hwCheck_' + rowKey;
+        const hwChecked = localStorage.getItem(hwCheckKey) === '1';
+        const hwCheckBtn = homework === '出す'
+          ? `<button onclick="event.stopPropagation();toggleHwCheck('${hwCheckKey}', this)"
+              style="font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:'Space Mono',monospace;flex-shrink:0;
+              background:${hwChecked ? 'var(--green)' : 'none'};
+              color:${hwChecked ? '#fff' : 'var(--text3)'};
+              border:1px solid ${hwChecked ? 'var(--green)' : 'var(--border)'};"
+              data-key="${hwCheckKey}">
+              ${hwChecked ? '✓ 準備済み' : '課題準備'}
+            </button>`
+          : '';
+
         return `<div class="task-student-row" style="cursor:pointer;${s.absent ? 'opacity:0.45;' : ''}"
           onclick="openStudentModal('${s.name}', window._taskRows['${rowKey}'])">
           <div class="task-student-name">
             ${s.name} ${absentBadge} ${hwBadge}
-            <span style="font-size:11px;color:var(--text3);margin-left:auto;">›</span>
+            <span style="margin-left:auto;">${hwCheckBtn}</span>
+            <span style="font-size:11px;color:var(--text3);">›</span>
           </div>
           ${!s.absent && nextLesson ? `<div class="task-next">${nextLesson}</div>` : ''}
           ${!s.absent && overrideMemo ? `<div class="task-next" style="color:var(--accent2);">📝 ${overrideMemo}</div>` : ''}
@@ -2178,7 +2232,11 @@ async function renderTasks(day) {
     </div>`;
   });
 
-  document.getElementById('tasks-content').innerHTML = html;
+  if (currentView === 'table') {
+    document.getElementById('tasks-content').innerHTML = renderTasksTable(classes, results);
+  } else {
+    document.getElementById('tasks-content').innerHTML = html;
+  }
 }
 
 function openStudentModal(name, row) {
@@ -2210,6 +2268,82 @@ function closeStudentModal() {
 
 function closeModal(e) {
   if (e.target === document.getElementById('student-modal')) closeStudentModal();
+}
+
+function renderTasksTable(classes, results) {
+  let html = `<table class="prep-table">
+    <thead>
+      <tr>
+        <th>クラス</th>
+        <th>生徒名</th>
+        <th>曲</th>
+        <th>週</th>
+        <th>課題</th>
+        <th>次回教えること</th>
+        <th>発表会曲</th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  classes.forEach((className, i) => {
+    const rows = results[i] || [];
+    const students = CLASS_PRESETS[className] || [];
+
+    const studentMap = {};
+    rows.forEach(row => {
+      const name = row['生徒名'];
+      if (!name) return;
+      if (!studentMap[name] || row['記録日時'] > studentMap[name]['記録日時']) {
+        studentMap[name] = row;
+      }
+    });
+
+    students.filter(s => s.phase !== '体験').forEach(s => {
+      const row = studentMap[s.name] || {};
+      const homework = row['課題上書き'] || row['課題'] || '';
+      const hwColor = homework === '出す' ? 'var(--accent)' : 'var(--text3)';
+      const song = row['曲名'] || LAST_SONGS[className + '___' + s.name]?.song || '';
+      const weeks = LAST_SONGS[className + '___' + s.name]?.weeks || '';
+      const nextLesson = row['次回教えること'] || '';
+      const cd = CONCERT_DATA.find(d => d.className === className && d.name === s.name);
+      const concertSong = cd?.song || '';
+      const overrideMemo = row['上書きメモ'] || '';
+
+      const hwCheckKey = `hwCheck_${className}___${s.name}`;
+      const hwChecked = localStorage.getItem(hwCheckKey) === '1';
+      const hwCell = homework === '出す'
+        ? `<span style="color:${hwChecked ? 'var(--green)' : hwColor};cursor:pointer;"
+            onclick="toggleHwCheck('${hwCheckKey}', this)" data-key="${hwCheckKey}">
+            ${hwChecked ? '✓済' : '出す'}
+           </span>`
+        : `<span style="color:var(--text3);">なし</span>`;
+
+      html += `<tr class="${s.absent ? 'absent-row' : ''}">
+        <td style="color:var(--accent);font-family:'Space Mono',monospace;font-size:10px;white-space:nowrap;">${className}</td>
+        <td style="font-weight:${s.absent ? '400' : '700'};white-space:nowrap;">
+          ${s.name}${s.absent ? ' <span style="font-size:10px;color:var(--text3);">(休)</span>' : ''}
+        </td>
+        <td>${song}${weeks ? `<span style="color:var(--text3);font-size:10px;"> ${weeks}週</span>` : ''}</td>
+        <td style="text-align:center;">${weeks || '-'}</td>
+        <td>${hwCell}${overrideMemo ? `<div style="font-size:10px;color:var(--accent2);">📝${overrideMemo}</div>` : ''}</td>
+        <td style="max-width:200px;">${nextLesson}</td>
+        <td style="color:var(--accent2);">${concertSong}</td>
+      </tr>`;
+    });
+  });
+
+  html += '</tbody></table>';
+  return html;
+}
+
+function toggleHwCheck(key, btn) {
+  const checked = localStorage.getItem(key) === '1';
+  const newVal = checked ? '0' : '1';
+  localStorage.setItem(key, newVal);
+  btn.style.background = newVal === '1' ? 'var(--green)' : 'none';
+  btn.style.color = newVal === '1' ? '#fff' : 'var(--text3)';
+  btn.style.border = `1px solid ${newVal === '1' ? 'var(--green)' : 'var(--border)'}`;
+  btn.textContent = newVal === '1' ? '✓ 準備済み' : '課題準備';
 }
 
 function buildBadges(className) {
