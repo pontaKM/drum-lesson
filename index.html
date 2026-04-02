@@ -938,6 +938,7 @@ let CLASS_PRESETS = {};
 let TRANSFER_DATA = []; // 振替予定データ
 let LAST_SONGS = {}; // 各生徒の前回曲名
 let CONCERT_DATA = []; // 発表会進捗データ
+let HW_CHECKS = []; // 課題チェック状態
 
 async function loadMasterData() {
   // キャッシュから即時表示
@@ -1135,6 +1136,49 @@ async function loadConcertData() {
     document.head.appendChild(script);
     script.onerror = () => { clearTimeout(timeout); resolve(); };
   });
+}
+
+async function loadHwChecks() {
+  return new Promise((resolve) => {
+    const callbackName = 'hwChecksCallback_' + Date.now();
+    const timeout = setTimeout(() => {
+      delete window[callbackName];
+      const s = document.getElementById('hwchecks-script');
+      if (s) s.remove();
+      resolve();
+    }, 10000);
+    window[callbackName] = function(data) {
+      clearTimeout(timeout);
+      delete window[callbackName];
+      const s = document.getElementById('hwchecks-script');
+      if (s) s.remove();
+      if (data.status === 'ok') HW_CHECKS = data.checks || [];
+      resolve();
+    };
+    const script = document.createElement('script');
+    script.id = 'hwchecks-script';
+    script.src = GAS_URL + '?action=hw_checks&callback=' + callbackName;
+    document.head.appendChild(script);
+    script.onerror = () => { clearTimeout(timeout); resolve(); };
+  });
+}
+
+async function saveHwCheck(className, name, checked) {
+  try {
+    const form = new FormData();
+    form.append('payload', JSON.stringify({action: 'hw_check', className, name, checked}));
+    await fetch(GAS_URL, {method: 'POST', mode: 'no-cors', body: form});
+    // ローカルも更新
+    if (checked) {
+      if (!HW_CHECKS.find(c => c.className === className && c.name === name)) {
+        HW_CHECKS.push({className, name, checkedAt: new Date().toLocaleString('ja-JP')});
+      }
+    } else {
+      HW_CHECKS = HW_CHECKS.filter(c => !(c.className === className && c.name === name));
+    }
+  } catch(e) {
+    console.error('課題チェック保存エラー:', e);
+  }
 }
 
 function populateClassSelectors() {
@@ -2125,10 +2169,8 @@ function switchDay(day) {
 }
 
 async function renderTasks(day) {
-  // CONCERT_DATAが空なら読み込み直す
-  if (CONCERT_DATA.length === 0) {
-    await loadConcertData();
-  }
+  if (CONCERT_DATA.length === 0) await loadConcertData();
+  if (HW_CHECKS.length === 0) await loadHwChecks();
   const prefix = day === 'fri' ? '金曜' : '土曜';
   const classes = Object.keys(CLASS_PRESETS)
     .filter(c => c.startsWith(prefix))
@@ -2309,14 +2351,16 @@ function renderTasksTable(classes, results) {
       const concertSong = cd?.song || '';
       const overrideMemo = row['上書きメモ'] || '';
 
-      const hwCheckKey = `hwCheck_${className}___${s.name}`;
-      const hwChecked = localStorage.getItem(hwCheckKey) === '1';
+      const hwChecked = HW_CHECKS.some(c => c.className === className && c.name === s.name);
       const hwCell = homework === '出す'
-        ? `<span style="color:${hwChecked ? 'var(--green)' : hwColor};cursor:pointer;"
-            onclick="toggleHwCheck('${hwCheckKey}', this)" data-key="${hwCheckKey}">
-            ${hwChecked ? '✓済' : '出す'}
-           </span>`
-        : `<span style="color:var(--text3);">なし</span>`;
+        ? `<button onclick="event.stopPropagation();toggleHwCheckGas('${className}','${s.name}',this)"
+            style="font-size:11px;padding:3px 10px;border-radius:4px;cursor:pointer;font-family:'Space Mono',monospace;
+            background:${hwChecked ? 'var(--green)' : 'none'};
+            color:${hwChecked ? '#fff' : 'var(--text3)'};
+            border:1px solid ${hwChecked ? 'var(--green)' : 'var(--border)'};">
+            ${hwChecked ? '✓ 済' : '準備する'}
+          </button>`
+        : `<span style="color:var(--text3);font-size:11px;">なし</span>`;
 
       html += `<tr class="${s.absent ? 'absent-row' : ''}">
         <td style="color:var(--accent);font-family:'Space Mono',monospace;font-size:10px;white-space:nowrap;">${className}</td>
@@ -2337,6 +2381,7 @@ function renderTasksTable(classes, results) {
 }
 
 function toggleHwCheck(key, btn) {
+  // カードビュー用（localStorage）
   const checked = localStorage.getItem(key) === '1';
   const newVal = checked ? '0' : '1';
   localStorage.setItem(key, newVal);
@@ -2344,6 +2389,19 @@ function toggleHwCheck(key, btn) {
   btn.style.color = newVal === '1' ? '#fff' : 'var(--text3)';
   btn.style.border = `1px solid ${newVal === '1' ? 'var(--green)' : 'var(--border)'}`;
   btn.textContent = newVal === '1' ? '✓ 準備済み' : '課題準備';
+}
+
+async function toggleHwCheckGas(className, name, btn) {
+  // テーブルビュー用（GAS連携）
+  const checked = HW_CHECKS.some(c => c.className === className && c.name === name);
+  const newChecked = !checked;
+  // 即時UI更新
+  btn.style.background = newChecked ? 'var(--green)' : 'none';
+  btn.style.color = newChecked ? '#fff' : 'var(--text3)';
+  btn.style.border = `1px solid ${newChecked ? 'var(--green)' : 'var(--border)'}`;
+  btn.textContent = newChecked ? '✓ 済' : '準備する';
+  // GASに保存
+  await saveHwCheck(className, name, newChecked);
 }
 
 function buildBadges(className) {
