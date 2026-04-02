@@ -1398,6 +1398,7 @@ function buildStudentCard(i) {
         ${phaseOptions}
       </select>
       <button class="toggle-btn" id="toggle-${i}">＋</button>
+      <button id="absent-btn-${i}" onclick="event.stopPropagation();toggleAbsent(${i})" style="background:none;border:1px solid var(--border);border-radius:4px;color:var(--text3);font-size:10px;padding:3px 8px;cursor:pointer;font-family:'Space Mono',monospace;white-space:nowrap;flex-shrink:0;">休み</button>
     </div>
     <div class="student-body" id="body-${i}">
       <div class="fields-grid">
@@ -1427,6 +1428,23 @@ function buildStudentCard(i) {
         <div class="field-group" style="grid-column: 1/-1;">
           <div class="field-label">メモ</div>
           <input type="text" id="s${i}_memo" placeholder="任意">
+        </div>
+        <div id="s${i}_concert_section" style="display:none;grid-column:1/-1;flex-direction:column;background:rgba(184,94,34,0.08);border:1px solid var(--accent2);border-radius:6px;padding:10px 12px;gap:8px;">
+          <div style="font-size:11px;font-weight:700;color:var(--accent2);font-family:'Space Mono',monospace;letter-spacing:0.08em;">🎵 発表会（8/2）</div>
+          <div class="fields-grid" style="gap:8px;">
+            <div class="field-group">
+              <div class="field-label">発表会曲名</div>
+              <input type="text" id="s${i}_concert_song" placeholder="曲名">
+            </div>
+            <div class="field-group">
+              <div class="field-label">楽譜準備状況</div>
+              <input type="text" id="s${i}_concert_sheet" placeholder="例：準備済み・注文中">
+            </div>
+            <div class="field-group" style="grid-column:1/-1;">
+              <div class="field-label">譜読み進行状況</div>
+              <input type="text" id="s${i}_concert_reading" placeholder="例：Aメロまで完了">
+            </div>
+          </div>
         </div>
       </div>
     </div>
