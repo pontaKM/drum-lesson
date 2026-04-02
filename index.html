@@ -1030,19 +1030,20 @@ let currentInputDay = localStorage.getItem('drumLastDay') || '金曜';
 function autoSelectDay(dateStr) {
   if (!dateStr) return;
   const dow = new Date(dateStr).getDay(); // 0=日,1=月...5=金,6=土
-  if (dow === 5) filterInputDay('金曜');
-  else if (dow === 6) filterInputDay('土曜');
+  // 日付変更時は曜日ボタンだけ切り替え（生徒リストは維持）
+  if (dow === 5) filterInputDay('金曜', false);
+  else if (dow === 6) filterInputDay('土曜', false);
 }
 
-function filterInputDay(day) {
+function filterInputDay(day, autoLoad = true) {
   currentInputDay = day;
   localStorage.setItem('drumLastDay', day);
   document.getElementById('input-day-fri').classList.toggle('active', day === '金曜');
   document.getElementById('input-day-sat').classList.toggle('active', day === '土曜');
-  renderClassButtons(day);
+  renderClassButtons(day, autoLoad);
 }
 
-function renderClassButtons(day) {
+function renderClassButtons(day, autoLoad = true) {
   const grid = document.getElementById('class-btn-grid');
   const classes = Object.keys(CLASS_PRESETS)
     .filter(c => c.startsWith(day))
@@ -1056,8 +1057,8 @@ function renderClassButtons(day) {
       onclick="selectClassBtn('${c}')">${c.replace(day, '').trim()}</button>`;
   }).join('');
 
-  // 前回選択クラスを自動ロード
-  if (lastClass && classes.includes(lastClass)) {
+  // 前回選択クラスを自動ロード（初回起動時のみ）
+  if (autoLoad && lastClass && classes.includes(lastClass)) {
     const fakeSelect = { value: lastClass };
     loadPreset(fakeSelect);
     showSelectedClass(lastClass);
