@@ -909,6 +909,7 @@
 let CLASS_PRESETS = {};
 let TRANSFER_DATA = []; // 振替予定データ
 let LAST_SONGS = {}; // 各生徒の前回曲名
+let CONCERT_DATA = []; // 発表会進捗データ
 
 async function loadMasterData() {
   // キャッシュから即時表示
@@ -1080,6 +1081,31 @@ function showSelectedClass(className) {
   const display = document.getElementById('selected-class-display');
   display.textContent = '選択中：' + className;
   display.style.display = 'block';
+}
+
+async function loadConcertData() {
+  return new Promise((resolve) => {
+    const callbackName = 'concertCallback_' + Date.now();
+    const timeout = setTimeout(() => {
+      delete window[callbackName];
+      const s = document.getElementById('concert-script');
+      if (s) s.remove();
+      resolve();
+    }, 10000);
+    window[callbackName] = function(data) {
+      clearTimeout(timeout);
+      delete window[callbackName];
+      const s = document.getElementById('concert-script');
+      if (s) s.remove();
+      if (data.status === 'ok') CONCERT_DATA = data.data || [];
+      resolve();
+    };
+    const script = document.createElement('script');
+    script.id = 'concert-script';
+    script.src = GAS_URL + '?action=concert&callback=' + callbackName;
+    document.head.appendChild(script);
+    script.onerror = () => { clearTimeout(timeout); resolve(); };
+  });
 }
 
 function populateClassSelectors() {
@@ -1295,6 +1321,18 @@ function loadPreset(selectEl) {
       document.getElementById(`s${idx}_song`).value = lastSong.song;
       document.getElementById(`s${idx}_song_weeks`).value = lastSong.weeks ? lastSong.weeks + '週目' : '';
     }
+
+    // 発表会参加生徒は発表会セクションを表示・前回データを入力
+    if (s.concert) {
+      const sec = document.getElementById(`s${idx}_concert_section`);
+      if (sec) sec.style.display = 'flex';
+      const cd = CONCERT_DATA.find(d => d.className === key && d.name === s.name);
+      if (cd) {
+        document.getElementById(`s${idx}_concert_song`).value    = cd.song          || '';
+        document.getElementById(`s${idx}_concert_sheet`).value   = cd.sheetStatus   || '';
+        document.getElementById(`s${idx}_concert_reading`).value = cd.readingStatus || '';
+      }
+    }
   });
 }
 
@@ -1391,6 +1429,9 @@ function collectData() {
       songSection: document.getElementById(`s${i}_song_section`).value || 'なし',
       songWeeks: document.getElementById(`s${i}_song_weeks`).value || '自動',
       memo: document.getElementById(`s${i}_memo`).value || 'なし',
+      concertSong:          (document.getElementById(`s${i}_concert_song`)?.value    || ''),
+      concertSheetStatus:   (document.getElementById(`s${i}_concert_sheet`)?.value   || ''),
+      concertReadingStatus: (document.getElementById(`s${i}_concert_reading`)?.value || ''),
     });
   }
   return { className, lessonDate, students };
@@ -2055,6 +2096,13 @@ async function renderTasks(day) {
         const absentBadge = s.absent
           ? `<span style="font-size:10px;color:var(--text3);border:1px solid var(--border);padding:1px 6px;border-radius:4px;font-family:'Space Mono',monospace;">今週休み</span>`
           : '';
+        const concertInfo = s.concert
+          ? (() => {
+              const cd = CONCERT_DATA.find(d => d.className === className && d.name === s.name);
+              if (!cd) return `<div style="font-size:11px;color:var(--accent2);margin-top:4px;">🎵 発表会参加（未登録）</div>`;
+              return `<div style="font-size:11px;color:var(--accent2);margin-top:4px;">🎵 ${cd.song || '曲未定'}　楽譜:${cd.sheetStatus || '-'}　譜読み:${cd.readingStatus || '-'}</div>`;
+            })()
+          : '';
 
         return `<div class="task-student-row" style="cursor:pointer;${s.absent ? 'opacity:0.45;' : ''}"
           onclick="openStudentModal('${s.name}', window._taskRows['${rowKey}'])">
@@ -2065,6 +2113,7 @@ async function renderTasks(day) {
           ${!s.absent && nextLesson ? `<div class="task-next">${nextLesson}</div>` : ''}
           ${!s.absent && overrideMemo ? `<div class="task-next" style="color:var(--accent2);">📝 ${overrideMemo}</div>` : ''}
           ${!s.absent && song ? `<div class="task-song">🎵 ${song}${weeks ? ' ' + weeks + '週目' : ''}</div>` : ''}
+          ${concertInfo}
         </div>`;
       }).join('');
 
