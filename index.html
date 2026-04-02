@@ -1278,10 +1278,42 @@ function loadPreset(selectEl) {
   if (!students) return;
   // class name is driven by select
 
-  // 全生徒スロットをリセット
+  // 全生徒スロットをリセット（全入力欄をクリア）
   for (let i = 1; i <= STUDENT_COUNT; i++) {
     document.getElementById(`s${i}_name`).value = '';
     document.getElementById(`s${i}_phase`).value = 'Pre';
+    // スキル・セクション・メモをクリア
+    const skill = document.getElementById(`s${i}_skill`);
+    if (skill) skill.value = '';
+    const section = document.getElementById(`s${i}_song_section`);
+    if (section) section.value = '';
+    const memo = document.getElementById(`s${i}_memo`);
+    if (memo) memo.value = '';
+    // 曲・週数をクリア
+    const song = document.getElementById(`s${i}_song`);
+    if (song) song.value = '';
+    const weeks = document.getElementById(`s${i}_song_weeks`);
+    if (weeks) weeks.value = '';
+    // スライダーをリセット
+    ['mastery','practice','motive','autonomy'].forEach(key => {
+      const slider = document.getElementById(`s${i}_${key}_slider`);
+      const val = document.getElementById(`s${i}_${key}_val`);
+      if (slider) { slider.value = 3; }
+      if (val) val.textContent = '3';
+    });
+    // 発表会欄をクリア
+    const cSong = document.getElementById(`s${i}_concert_song`);
+    const cSheet = document.getElementById(`s${i}_concert_sheet`);
+    const cReading = document.getElementById(`s${i}_concert_reading`);
+    if (cSong) cSong.value = '';
+    if (cSheet) cSheet.value = '';
+    if (cReading) cReading.value = '';
+    // 発表会セクションを非表示
+    const cSec = document.getElementById(`s${i}_concert_section`);
+    if (cSec) cSec.style.display = 'none';
+    // 休みトグルをリセット
+    setAbsent(i, false);
+    // 折りたたむ
     const body = document.getElementById(`body-${i}`);
     const btn = document.getElementById(`toggle-${i}`);
     if (body) body.classList.remove('open');
@@ -1291,9 +1323,8 @@ function loadPreset(selectEl) {
   // 今日の日付
   const todayStr = document.getElementById('lesson-date').value;
 
-  // 体験生徒は当日のみ表示、お休み生徒は除外、通常生徒は常に表示
+  // 体験生徒は当日のみ表示、通常生徒は常に表示（休みフラグは入力画面では無視）
   const visibleStudents = students.filter(s => {
-    if (s.absent) return false;
     if (s.phase !== '体験') return true;
     if (!s.lessonDate) return false;
     return s.lessonDate === todayStr;
@@ -2243,6 +2274,30 @@ async function fetchClassDataFromGAS(className) {
     document.head.appendChild(script);
     script.onerror = () => { clearTimeout(timeout); resolve([]); };
   });
+}
+
+function toggleAbsent(i) {
+  const btn = document.getElementById(`absent-btn-${i}`);
+  const isAbsent = btn.dataset.absent === '1';
+  setAbsent(i, !isAbsent);
+}
+
+function setAbsent(i, absent) {
+  const btn = document.getElementById(`absent-btn-${i}`);
+  if (!btn) return;
+  btn.dataset.absent = absent ? '1' : '0';
+  btn.style.background = absent ? 'var(--border)' : 'none';
+  btn.style.color = absent ? 'var(--text2)' : 'var(--text3)';
+  btn.textContent = absent ? '休み✓' : '休み';
+  // 入力欄を無効化
+  const body = document.getElementById(`body-${i}`);
+  if (body) {
+    body.querySelectorAll('input, select, textarea').forEach(el => {
+      el.disabled = absent;
+    });
+    body.style.opacity = absent ? '0.4' : '1';
+    body.style.pointerEvents = absent ? 'none' : '';
+  }
 }
 
 function showError(msg) {
