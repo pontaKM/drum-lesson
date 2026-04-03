@@ -2341,7 +2341,20 @@ function renderTasksTable(classes, results) {
       }
     });
 
-    students.filter(s => s.phase !== '体験').forEach(s => {
+    // 今週の日曜日〜今日を計算（時刻を除いて比較）
+    const today = new Date();
+    today.setHours(23, 59, 59, 0); // 今日の終わり
+    const thisSunday = new Date();
+    thisSunday.setDate(new Date().getDate() - new Date().getDay());
+    thisSunday.setHours(0, 0, 0, 0);
+
+    students.filter(s => {
+      if (s.phase !== '体験') return true;
+      if (!s.lessonDate) return false;
+      const lessonDate = new Date(s.lessonDate);
+      lessonDate.setHours(12, 0, 0, 0); // 正午で比較
+      return lessonDate >= thisSunday && lessonDate <= today;
+    }).forEach(s => {
       const row = studentMap[s.name] || {};
       const homework = row['課題上書き'] || row['課題'] || '';
       const hwColor = homework === '出す' ? 'var(--accent)' : 'var(--text3)';
@@ -2363,10 +2376,13 @@ function renderTasksTable(classes, results) {
           </button>`
         : `<span style="color:var(--text3);font-size:11px;">なし</span>`;
 
+      const trialBadge = s.phase === '体験'
+        ? `<span style="font-size:10px;color:var(--accent2);border:1px solid var(--accent2);padding:1px 5px;border-radius:3px;margin-left:4px;">体験</span>`
+        : '';
       html += `<tr class="${s.absent ? 'absent-row' : ''}">
         <td style="color:var(--accent);font-family:'Space Mono',monospace;font-size:10px;white-space:nowrap;">${className}</td>
         <td style="font-weight:${s.absent ? '400' : '700'};white-space:nowrap;">
-          ${s.name}${s.absent ? ' <span style="font-size:10px;color:var(--text3);">(休)</span>' : ''}
+          ${s.name}${trialBadge}${s.absent ? ' <span style="font-size:10px;color:var(--text3);">(休)</span>' : ''}
         </td>
         <td>${song}${weeks ? `<span style="color:var(--text3);font-size:10px;"> ${weeks}週</span>` : ''}</td>
         <td style="text-align:center;">${weeks || '-'}</td>
