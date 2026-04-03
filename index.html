@@ -1596,6 +1596,7 @@ function buildPrompt(data) {
 
 グループ特性：1クラス5人・年齢もレベルもバラバラ。上手い子には1tips発展、遅れている子には復習案を。
 メモに「次曲：〇〇」が含まれる場合は曲アドバイスに次曲への移行タイミングを含める。
+メモに「課題：〇〇」が含まれる場合はその内容を課題として必ず採用し、homework=trueとする。homework_reasonにはメモの課題内容をそのまま使う。
 
 ### 入力データ
 
@@ -2369,7 +2370,12 @@ function renderTasksTable(classes, results) {
         </td>
         <td>${song}${weeks ? `<span style="color:var(--text3);font-size:10px;"> ${weeks}週</span>` : ''}</td>
         <td style="text-align:center;">${weeks || '-'}</td>
-        <td>${hwCell}${overrideMemo ? `<div style="font-size:10px;color:var(--accent2);">📝${overrideMemo}</div>` : ''}</td>
+        <td>${hwCell}</td>
+        <td style="font-size:11px;color:var(--text2);max-width:160px;">
+          ${overrideMemo
+            ? `<span style="color:var(--accent2);">📝 ${overrideMemo}</span>`
+            : (row['課題理由'] || '')}
+        </td>
         <td style="max-width:200px;">${nextLesson}</td>
         <td style="color:var(--accent2);">${concertSong}</td>
       </tr>`;
