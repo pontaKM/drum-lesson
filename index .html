@@ -1,0 +1,2548 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ドラムレッスン">
+<meta name="theme-color" content="#f4f0e6">
+<title>ドラムレッスン管理</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg: #f4f0e6;
+    --surface: #ffffff;
+    --surface2: #ede8dc;
+    --border: #d5ccbb;
+    --accent: #4a6e38;
+    --accent2: #b85e22;
+    --text: #28200e;
+    --text2: #5c5040;
+    --text3: #8a7c6a;
+    --green: #3d6e32;
+    --yellow: #96720a;
+    --red: #b03020;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+  .header-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .header-date {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  /* Layout */
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  /* Section */
+  .section {
+    margin-bottom: 32px;
+  }
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 12px;
+  }
+
+  /* Class info */
+  .class-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  /* Input */
+  input, textarea, select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 16px;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--accent);
+  }
+  input::placeholder, textarea::placeholder {
+    color: #666;
+  }
+  select option { background: var(--surface2); }
+
+  /* Student cards */
+  .students-grid {
+    display: grid;
+    gap: 12px;
+  }
+
+  .student-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .student-card:focus-within {
+    border-color: #3e3e3e;
+  }
+
+  .student-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--surface2);
+    min-height: 56px;
+  }
+  .student-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    width: 20px;
+    flex-shrink: 0;
+  }
+  .student-name-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 0;
+    color: var(--text);
+    min-width: 0;
+  }
+  .student-name-input:focus { border: none; box-shadow: none; }
+
+  .student-phase {
+    width: 110px;
+    flex-shrink: 0;
+    background: var(--surface);
+    font-size: 13px;
+    padding: 8px;
+  }
+
+  .toggle-btn {
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 22px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s;
+    flex-shrink: 0;
+  }
+  .toggle-btn:hover { color: var(--text); }
+
+  .student-body {
+    padding: 16px;
+    display: none;
+    border-top: 1px solid var(--border);
+  }
+  .student-body.open { display: block; }
+
+  .fields-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  @media (max-width: 600px) {
+    .fields-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .field-group { display: flex; flex-direction: column; gap: 6px; }
+  .field-label {
+    font-size: 12px;
+    color: var(--text2);
+    font-weight: 500;
+  }
+
+  /* Slider */
+  .slider-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .slider-wrap input[type=range] {
+    flex: 1;
+    padding: 0;
+    height: 6px;
+    border: none;
+    accent-color: var(--accent);
+    background: var(--border);
+    cursor: pointer;
+  }
+  .slider-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 16px;
+    color: var(--accent);
+    width: 20px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* API Key */
+  .apikey-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    margin-bottom: 24px;
+  }
+  .apikey-row label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    white-space: nowrap;
+    letter-spacing: 0.05em;
+  }
+  .apikey-row input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    padding: 0;
+  }
+
+  /* Run button */
+  .run-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 18px;
+    font-family: 'Space Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .run-btn:hover { opacity: 0.9; }
+  .run-btn:active { transform: scale(0.99); }
+  .run-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Output */
+  .output-area {
+    display: none;
+    margin-top: 32px;
+  }
+  .output-area.visible { display: block; }
+
+  /* Score card */
+  .score-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .score-total {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .score-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .score-badge.green { color: var(--green); }
+  .score-badge.yellow { color: var(--yellow); }
+  .score-badge.red { color: var(--red); }
+  .score-label {
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .score-judgment {
+    font-size: 18px;
+    margin-left: 4px;
+  }
+
+  .score-axes {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+  .axis-item {
+    background: var(--surface2);
+    border-radius: 6px;
+    padding: 10px 8px;
+    text-align: center;
+  }
+  .axis-label {
+    font-size: 10px;
+    color: var(--text3);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .axis-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  /* Common bar */
+  .common-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .common-stage {
+    display: flex;
+    gap: 6px;
+  }
+  .stage-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    transition: all 0.2s;
+  }
+  .stage-dot.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 700;
+  }
+
+  /* Student result cards */
+  .result-cards { display: grid; gap: 10px; margin-bottom: 16px; }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .result-card-header {
+    padding: 12px 16px;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .result-name {
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .homework-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .homework-yes { background: rgba(74,110,56,0.12); color: var(--accent); border: 1px solid rgba(74,110,56,0.3); }
+  .homework-no { background: rgba(184,94,34,0.12); color: var(--accent2); border: 1px solid rgba(184,94,34,0.25); }
+
+  .result-card-body {
+    padding: 14px 16px;
+    display: grid;
+    gap: 10px;
+  }
+  .result-row { display: grid; gap: 4px; }
+  .result-row-label {
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: 'Space Mono', monospace;
+  }
+  .result-row-val {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* Action box */
+  .action-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  /* Loading */
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 48px 0;
+    color: var(--text2);
+  }
+  .loading.visible { display: block; }
+  .loading-dots {
+    font-family: 'Space Mono', monospace;
+    font-size: 24px;
+    letter-spacing: 0.3em;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+  .loading-text { margin-top: 12px; font-size: 12px; color: var(--text3); }
+
+  /* Error */
+  .error-msg {
+    display: none;
+    background: rgba(248,113,113,0.1);
+    border: 1px solid rgba(248,113,113,0.3);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    color: var(--red);
+    font-size: 13px;
+    margin-top: 12px;
+  }
+  .error-msg.visible { display: block; }
+
+  /* Divider */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text3);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--text2); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Review cards */
+  .review-class-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .review-class-header {
+    background: var(--surface2);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+  }
+  .review-class-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+  .review-class-meta {
+    font-size: 11px;
+    color: var(--text3);
+  }
+  .review-class-body {
+    display: none;
+    padding: 12px;
+  }
+  .review-class-body.open { display: block; }
+  .review-student-row {
+    background: var(--surface2);
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .review-student-name {
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .review-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .review-field { display: flex; flex-direction: column; gap: 2px; }
+  .review-field-label {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .review-field-val {
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .review-field-full {
+    grid-column: 1 / -1;
+  }
+  .burden-pill {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--surface);
+  }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open {
+    display: flex;
+  }
+  .modal-sheet {
+    background: var(--surface);
+    border-radius: 16px 16px 0 0;
+    width: 100%;
+    max-width: 640px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .modal-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: var(--text3);
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+  }
+  .modal-row {
+    margin-bottom: 12px;
+  }
+  .modal-row-label {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .modal-row-val {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* Class buttons */
+  .class-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text2);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    padding: 12px 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    width: 100%;
+  }
+  .class-btn:hover { border-color: var(--accent); color: var(--text); }
+  .class-btn.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 700;
+  }
+
+  /* Day buttons */
+  .day-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text2);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    padding: 8px 24px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+  .day-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 700;
+  }
+
+  /* Table view */
+  .prep-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 20px;
+  }
+  .prep-table th {
+    background: var(--surface2);
+    color: var(--text3);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+  }
+  .prep-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  .prep-table tr:hover td { background: var(--surface2); }
+  .prep-table tr.absent-row td { opacity: 0.4; }
+  .prep-table .class-header-row td {
+    background: var(--surface2);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Task cards */
+  .task-class-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .task-class-header {
+    background: var(--surface2);
+    padding: 10px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border);
+  }
+  .task-student-row {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    gap: 4px;
+  }
+  .task-student-row:last-child { border-bottom: none; }
+  .task-student-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .task-next {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.5;
+  }
+  .task-song {
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  /* Override */
+  .override-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-top: 8px;
+  }
+  .override-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .override-label {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .override-radio {
+    display: flex;
+    gap: 12px;
+  }
+  .override-radio label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .override-radio input[type=radio] {
+    width: auto;
+    border: none;
+    padding: 0;
+    accent-color: var(--accent);
+  }
+  .override-memo {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-title">Drum Lesson</span>
+  <span class="header-date" id="today-date"></span>
+</div>
+
+<div class="container">
+
+  <!-- API Key -->
+  <div class="apikey-row" id="apikey-row">
+    <label>API KEY</label>
+    <input type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off" oninput="localStorage.setItem('drumApiKey', this.value)">
+    <button onclick="toggleApiKey()" id="apikey-toggle" style="background:none;border:none;color:var(--text3);font-size:11px;font-family:'Space Mono',monospace;cursor:pointer;white-space:nowrap;">隠す</button>
+  </div>
+  <div id="apikey-saved" style="display:none;font-family:'Space Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:16px;cursor:pointer;" onclick="showApiKey()">
+    🔑 APIキー設定済み <span style="color:var(--accent);text-decoration:underline;">変更</span>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('input')">入力・AI判断</button>
+    <button class="tab-btn" onclick="switchTab('tasks')">今週の準備</button>
+  </div>
+
+  <!-- Tab: Input -->
+  <div class="tab-content active" id="tab-input">
+
+  <!-- Class info -->
+  <div class="section">
+    <div class="section-label">クラス情報</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+      <button class="day-btn active" id="input-day-fri" onclick="filterInputDay('金曜')">金曜</button>
+      <button class="day-btn" id="input-day-sat" onclick="filterInputDay('土曜')">土曜</button>
+      <input type="date" id="lesson-date" style="flex:1;margin-left:8px;" onchange="autoSelectDay(this.value)">
+    </div>
+    <div id="class-btn-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px;"></div>
+    <select id="class-select" onchange="loadPreset(this)" style="display:none;">
+      <option value="">── クラスを選択 ──</option>
+    </select>
+    <div id="selected-class-display" style="display:none;font-family:'Space Mono',monospace;font-size:12px;color:var(--accent);padding:6px 0;"></div>
+  </div>
+
+  <!-- Students -->
+  <div class="section">
+    <div class="section-label">生徒データ</div>
+    <div class="students-grid" id="students-grid"></div>
+  </div>
+
+  <!-- Run -->
+  <button class="run-btn" id="run-btn" onclick="runAI()">▶ AI判断を実行</button>
+  <div class="error-msg" id="error-msg"></div>
+
+  <!-- Loading -->
+  <div class="loading" id="loading">
+    <div class="loading-dots">···</div>
+    <div class="loading-text">Claude APIで処理中...</div>
+  </div>
+
+  <!-- Output -->
+  <div class="output-area" id="output-area">
+    <hr class="divider">
+    <div class="section-label">分析結果</div>
+
+    <!-- Score -->
+    <div class="score-card" id="score-card"></div>
+
+    <!-- Common -->
+    <div class="common-bar" id="common-bar"></div>
+
+    <!-- Action -->
+    <div class="action-box" id="action-box"></div>
+
+    <!-- Student results -->
+    <div class="section-label" style="margin-top:20px;">生徒ごとの次回プラン</div>
+    <div class="result-cards" id="result-cards"></div>
+
+    <!-- Summary -->
+    <div class="section-label" style="margin-top:20px;">クラス全体まとめ</div>
+    <div class="action-box" id="summary-box" style="border-left-color: var(--text3);"></div>
+
+    <button class="run-btn" id="save-btn" onclick="saveWithOverrides()"
+      style="margin-top:20px;background:var(--text2);color:#fff;">
+      ✓ この内容でスプレッドシートに保存
+    </button>
+    <div id="save-status" style="display:none;margin-top:10px;font-size:12px;font-family:'Space Mono',monospace;text-align:center;"></div>
+  </div>
+
+</div><!-- /tab-input -->
+
+  <!-- Tab: Tasks -->
+  <div class="tab-content" id="tab-tasks">
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+      <button class="day-btn active" id="day-fri" onclick="switchDay('fri')">金曜</button>
+      <button class="day-btn" id="day-sat" onclick="switchDay('sat')">土曜</button>
+      <div style="margin-left:auto;display:flex;gap:4px;">
+        <button id="view-card-btn" onclick="switchView('card')"
+          style="background:var(--accent);color:#fff;border:none;border-radius:4px;padding:6px 12px;font-size:11px;font-family:'Space Mono',monospace;cursor:pointer;">カード</button>
+        <button id="view-table-btn" onclick="switchView('table')"
+          style="background:none;border:1px solid var(--border);border-radius:4px;padding:6px 12px;font-size:11px;font-family:'Space Mono',monospace;cursor:pointer;color:var(--text3);">テーブル</button>
+      </div>
+    </div>
+    <div id="tasks-loading" style="display:none;text-align:center;padding:32px;color:var(--text3);font-size:13px;">読み込み中...</div>
+    <div id="tasks-content"></div>
+  </div><!-- /tab-tasks -->
+
+</div><!-- /container -->
+
+<!-- Student detail modal -->
+<div class="modal-overlay" id="student-modal" onclick="closeModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <span class="modal-name" id="modal-name"></span>
+      <button class="modal-close" onclick="closeStudentModal()">×</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+let CLASS_PRESETS = {};
+let TRANSFER_DATA = []; // 振替予定データ
+let LAST_SONGS = {}; // 各生徒の前回曲名
+let CONCERT_DATA = []; // 発表会進捗データ
+let HW_CHECKS = []; // 課題チェック状態
+
+async function loadMasterData() {
+  // キャッシュから即時表示
+  const cached = localStorage.getItem('drumMasterCache');
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached);
+      if (parsed.classes) {
+        CLASS_PRESETS = parsed.classes;
+        populateClassSelectors();
+      }
+      if (parsed.transfers) TRANSFER_DATA = parsed.transfers;
+      if (parsed.songs) LAST_SONGS = parsed.songs;
+    } catch(e) {}
+  }
+
+  // バックグラウンドで最新データを取得・更新
+  Promise.all([loadClassMaster(), loadTransferData(), loadLastSongs()]).then(() => {
+    localStorage.setItem('drumMasterCache', JSON.stringify({
+      classes: CLASS_PRESETS,
+      transfers: TRANSFER_DATA,
+      songs: LAST_SONGS,
+      updated: Date.now()
+    }));
+  });
+}
+
+async function loadClassMaster() {
+  return new Promise((resolve) => {
+    const callbackName = 'masterCallback_' + Date.now();
+    const timeout = setTimeout(() => {
+      delete window[callbackName];
+      const s = document.getElementById('master-script');
+      if (s) s.remove();
+      resolve();
+    }, 10000);
+
+    window[callbackName] = function(data) {
+      clearTimeout(timeout);
+      delete window[callbackName];
+      const s = document.getElementById('master-script');
+      if (s) s.remove();
+      if (data.status === 'ok') {
+        CLASS_PRESETS = data.classes || {};
+        populateClassSelectors();
+      }
+      resolve();
+    };
+
+    const script = document.createElement('script');
+    script.id = 'master-script';
+    script.src = GAS_URL + '?action=master&callback=' + callbackName;
+    document.head.appendChild(script);
+    script.onerror = () => { clearTimeout(timeout); resolve(); };
+  });
+}
+
+async function loadTransferData() {
+  return new Promise((resolve) => {
+    const callbackName = 'transferCallback_' + Date.now();
+    const timeout = setTimeout(() => {
+      delete window[callbackName];
+      const s = document.getElementById('transfer-script');
+      if (s) s.remove();
+      resolve();
+    }, 10000);
+
+    window[callbackName] = function(data) {
+      clearTimeout(timeout);
+      delete window[callbackName];
+      const s = document.getElementById('transfer-script');
+      if (s) s.remove();
+      if (data.status === 'ok') {
+        TRANSFER_DATA = data.transfers || [];
+      }
+      resolve();
+    };
+
+    const script = document.createElement('script');
+    script.id = 'transfer-script';
+    script.src = GAS_URL + '?action=transfer&callback=' + callbackName;
+    document.head.appendChild(script);
+    script.onerror = () => { clearTimeout(timeout); resolve(); };
+  });
+}
+
+async function loadLastSongs() {
+  return new Promise((resolve) => {
+    const callbackName = 'lastSongsCallback_' + Date.now();
+    const timeout = setTimeout(() => {
+      delete window[callbackName];
+      const s = document.getElementById('lastsongs-script');
+      if (s) s.remove();
+      resolve();
+    }, 10000);
+
+    window[callbackName] = function(data) {
+      clearTimeout(timeout);
+      delete window[callbackName];
+      const s = document.getElementById('lastsongs-script');
+      if (s) s.remove();
+      if (data.status === 'ok') {
+        LAST_SONGS = data.songs || {};
+      }
+      resolve();
+    };
+
+    const script = document.createElement('script');
+    script.id = 'lastsongs-script';
+    script.src = GAS_URL + '?action=last_songs&callback=' + callbackName;
+    document.head.appendChild(script);
+    script.onerror = () => { clearTimeout(timeout); resolve(); };
+  });
+}
+
+let currentInputDay = localStorage.getItem('drumLastDay') || '金曜';
+
+function autoSelectDay(dateStr) {
+  if (!dateStr) return;
+  const dow = new Date(dateStr).getDay(); // 0=日,1=月...5=金,6=土
+  // 日付変更時は曜日ボタンだけ切り替え（生徒リストは維持）
+  if (dow === 5) filterInputDay('金曜', false);
+  else if (dow === 6) filterInputDay('土曜', false);
+}
+
+function filterInputDay(day, autoLoad = true) {
+  currentInputDay = day;
+  localStorage.setItem('drumLastDay', day);
+  document.getElementById('input-day-fri').classList.toggle('active', day === '金曜');
+  document.getElementById('input-day-sat').classList.toggle('active', day === '土曜');
+  renderClassButtons(day, autoLoad);
+}
+
+function renderClassButtons(day, autoLoad = true) {
+  const grid = document.getElementById('class-btn-grid');
+  const classes = Object.keys(CLASS_PRESETS)
+    .filter(c => c.startsWith(day))
+    .sort();
+
+  const lastClass = localStorage.getItem('drumLastClass');
+
+  grid.innerHTML = classes.map(c => {
+    const isSelected = c === lastClass;
+    return `<button class="class-btn ${isSelected ? 'selected' : ''}"
+      onclick="selectClassBtn('${c}')">${c.replace(day, '').trim()}</button>`;
+  }).join('');
+
+  // 前回選択クラスを自動ロード（初回起動時のみ）
+  if (autoLoad && lastClass && classes.includes(lastClass)) {
+    const fakeSelect = { value: lastClass };
+    loadPreset(fakeSelect);
+    showSelectedClass(lastClass);
+  }
+}
+
+function selectClassBtn(className) {
+  localStorage.setItem('drumLastClass', className);
+  // ボタンのスタイル更新
+  document.querySelectorAll('.class-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.textContent.trim() === className.replace(currentInputDay, '').trim());
+  });
+  // hidden selectを更新してloadPreset呼び出し
+  const sel = document.getElementById('class-select');
+  sel.value = className;
+  loadPreset(sel);
+  showSelectedClass(className);
+}
+
+function showSelectedClass(className) {
+  const display = document.getElementById('selected-class-display');
+  display.textContent = '選択中：' + className;
+  display.style.display = 'block';
+}
+
+async function loadConcertData() {
+  return new Promise((resolve) => {
+    const callbackName = 'concertCallback_' + Date.now();
+    const timeout = setTimeout(() => {
+      delete window[callbackName];
+      const s = document.getElementById('concert-script');
+      if (s) s.remove();
+      resolve();
+    }, 10000);
+    window[callbackName] = function(data) {
+      clearTimeout(timeout);
+      delete window[callbackName];
+      const s = document.getElementById('concert-script');
+      if (s) s.remove();
+      if (data.status === 'ok') CONCERT_DATA = data.data || [];
+      resolve();
+    };
+    const script = document.createElement('script');
+    script.id = 'concert-script';
+    script.src = GAS_URL + '?action=concert&callback=' + callbackName;
+    document.head.appendChild(script);
+    script.onerror = () => { clearTimeout(timeout); resolve(); };
+  });
+}
+
+async function loadHwChecks() {
+  return new Promise((resolve) => {
+    const callbackName = 'hwChecksCallback_' + Date.now();
+    const timeout = setTimeout(() => {
+      delete window[callbackName];
+      const s = document.getElementById('hwchecks-script');
+      if (s) s.remove();
+      resolve();
+    }, 10000);
+    window[callbackName] = function(data) {
+      clearTimeout(timeout);
+      delete window[callbackName];
+      const s = document.getElementById('hwchecks-script');
+      if (s) s.remove();
+      if (data.status === 'ok') HW_CHECKS = data.checks || [];
+      resolve();
+    };
+    const script = document.createElement('script');
+    script.id = 'hwchecks-script';
+    script.src = GAS_URL + '?action=hw_checks&callback=' + callbackName;
+    document.head.appendChild(script);
+    script.onerror = () => { clearTimeout(timeout); resolve(); };
+  });
+}
+
+async function saveHwCheck(className, name, checked) {
+  try {
+    const form = new FormData();
+    form.append('payload', JSON.stringify({action: 'hw_check', className, name, checked}));
+    await fetch(GAS_URL, {method: 'POST', mode: 'no-cors', body: form});
+    // ローカルも更新
+    if (checked) {
+      if (!HW_CHECKS.find(c => c.className === className && c.name === name)) {
+        HW_CHECKS.push({className, name, checkedAt: new Date().toLocaleString('ja-JP')});
+      }
+    } else {
+      HW_CHECKS = HW_CHECKS.filter(c => !(c.className === className && c.name === name));
+    }
+  } catch(e) {
+    console.error('課題チェック保存エラー:', e);
+  }
+}
+
+function populateClassSelectors() {
+  const classNames = Object.keys(CLASS_PRESETS).sort();
+
+  // hidden select（loadPreset用）
+  const sel = document.getElementById('class-select');
+  sel.innerHTML = '<option value="">── クラスを選択 ──</option>';
+  classNames.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  });
+
+  // 確認タブのクラス選択
+  const reviewSel = document.getElementById('review-class-select');
+  if (reviewSel) {
+    reviewSel.innerHTML = '<option value="">── クラスを選択 ──</option>';
+    classNames.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      reviewSel.appendChild(opt);
+    });
+  }
+
+  // 入力タブの曜日ボタンと初期表示
+  const savedDay = localStorage.getItem('drumLastDay') || '金曜';
+  currentInputDay = savedDay;
+  document.getElementById('input-day-fri').classList.toggle('active', savedDay === '金曜');
+  document.getElementById('input-day-sat').classList.toggle('active', savedDay === '土曜');
+  renderClassButtons(savedDay);
+}
+
+const SKILL_HINTS = [
+  // Pre・初級
+  {label:'─── Pre / 初級 ───', value:'', disabled: true},
+  {label:'Pre：キッズプリント（どんどんたん等）',            value:'Pre キッズプリント'},
+  {label:'Ph.1：スティックの持ち方・基本フォーム',           value:'Ph.1 フォーム'},
+  {label:'Ph.1：各楽器の叩き方（スネア・バスドラ・HH）',     value:'Ph.1 楽器の叩き方'},
+  {label:'Ph.2：きほんれんしゅう②',                         value:'Ph.2 きほんれんしゅう②'},
+  {label:'Ph.2：8ビート基礎（テンポ60）',                    value:'Ph.2 8ビートtemp60'},
+  {label:'Ph.2：8ビート基礎（テンポ80）',                    value:'Ph.2 8ビートtemp80'},
+  {label:'Ph.3：8ビートバリエーション',                      value:'Ph.3 バリエーション'},
+  {label:'Ph.4：フィルイン基本型',                           value:'Ph.4 フィルイン基本型'},
+  {label:'Ph.5：フィルイン発展・HHオープン',                 value:'Ph.5 フィルイン発展'},
+  {label:'Ph.6：特殊奏法（リム・フラム・ブレイク）',          value:'Ph.6 特殊奏法'},
+  {label:'リズトレ（番号を入力）',                           value:'リズトレ No.'},
+
+  // 中級：練習項目
+  {label:'─── 中級：練習項目 ───', value:'', disabled: true},
+  {label:'中級：シェイクビート',                             value:'中級 シェイクビート'},
+  {label:'中級：16ビート（両手）',                           value:'中級 16ビート両手'},
+  {label:'中級：16ビート（片手）',                           value:'中級 16ビート片手'},
+  {label:'中級：16ビート（バウンス）',                       value:'中級 16ビートバウンス'},
+  {label:'中級：メトロノーム練習',                           value:'中級 メトロノーム練習'},
+  {label:'中級：ロック系リズム',                             value:'中級 ロック系リズム'},
+  {label:'中級：裏打ち（ダンス・ディスコ・etc）',            value:'中級 裏打ち'},
+  {label:'中級：3連系ビート',                                value:'中級 3連系ビート'},
+  {label:'中級：シャッフルビート',                           value:'中級 シャッフル'},
+  {label:'中級：16分音符のフットワーク①',                   value:'中級 フットワーク①'},
+  {label:'中級：16分音符のフットワーク②',                   value:'中級 フットワーク②'},
+  {label:'中級：足のダブルストローク',                       value:'中級 足ダブルストローク'},
+  {label:'中級：ツーバス・ツインペダル①',                   value:'中級 ツーバス①'},
+  {label:'中級：ツーバス・ツインペダル②',                   value:'中級 ツーバス②'},
+  {label:'中級：フィルインの発展',                           value:'中級 フィルイン発展'},
+  {label:'中級：1拍半のフレーズ',                            value:'中級 1拍半フレーズ'},
+
+  // 中級：基礎練習
+  {label:'─── 中級：基礎練習 ───', value:'', disabled: true},
+  {label:'中級：ダブルストロークの叩き方',                   value:'中級 ダブルストローク'},
+  {label:'中級：パラディドルの叩き方',                       value:'中級 パラディドル'},
+  {label:'中級：ルーディメンツ',                             value:'中級 ルーディメンツ'},
+  {label:'中級：右手左手に特化したエクササイズ',             value:'中級 左右エクササイズ'},
+  {label:'中級：右足に特化したエクササイズ',                 value:'中級 右足エクササイズ'},
+  {label:'中級：左足に特化したエクササイズ',                 value:'中級 左足エクササイズ'},
+  {label:'中級：手足のコンビネーション',                     value:'中級 手足コンビ'},
+  {label:'中級：ファットバック',                             value:'中級 ファットバック'},
+  {label:'中級：ダイナミクス',                               value:'中級 ダイナミクス'},
+  {label:'中級：リーディング',                               value:'中級 リーディング'},
+
+  // 中級：音楽ジャンル
+  {label:'─── 中級：音楽ジャンル ───', value:'', disabled: true},
+  {label:'中級：ジャズ（Jazz）のリズム',                    value:'中級 ジャズ'},
+  {label:'中級：ブラジルのリズム',                           value:'中級 ブラジル'},
+  {label:'中級：ラテンのリズム',                             value:'中級 ラテン'},
+  {label:'中級：その他のリズム',                             value:'中級 その他リズム'},
+
+  // 中級：アンサンブル
+  {label:'─── 中級：アンサンブル ───', value:'', disabled: true},
+  {label:'中級：二重奏・三重奏',                             value:'中級 二重奏三重奏'},
+  {label:'中級：パーカッションアンサンブル',                 value:'中級 パーカッションアンサンブル'},
+
+  // 共通
+  {label:'─── 共通 ───', value:'', disabled: true},
+  {label:'曲練習のみ',                                       value:'曲練習'},
+];
+
+const PHASES = ['体験','Pre','Ph.1','Ph.2','Ph.3','Ph.4','Ph.5','Ph.6','中級'];
+const STUDENT_COUNT = 5;
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxmk_cJykap1VztRTAxnaEH5Wb7xF12TXK65nVE6bWtEB6EXsFisHGm2k1TKvnUTjzQ/exec';
+
+function init() {
+  // Load saved API key
+  const savedKey = localStorage.getItem('drumApiKey');
+  if (savedKey) {
+    document.getElementById('api-key').value = savedKey;
+    document.getElementById('apikey-row').style.display = 'none';
+    document.getElementById('apikey-saved').style.display = 'block';
+  }
+
+  // Date
+  const today = new Date();
+  document.getElementById('today-date').textContent =
+    today.toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric',weekday:'short'});
+  document.getElementById('lesson-date').value = today.toISOString().split('T')[0];
+
+  // Load master data from Google Sheets
+  loadMasterData();
+
+  // Build student cards
+  const grid = document.getElementById('students-grid');
+  for (let i = 1; i <= STUDENT_COUNT; i++) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = buildStudentCard(i);
+    grid.appendChild(tmp.firstElementChild);
+  }
+
+  populateSkillSelects();
+
+  // Slider events
+  document.querySelectorAll('input[type=range]').forEach(s => {
+    s.addEventListener('input', e => {
+      const id = e.target.id.replace('_slider','_val');
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = e.target.value;
+    });
+  });
+}
+
+function fillSkill(selectEl, i) {
+  if (!selectEl.value) return;
+  document.getElementById(`s${i}_skill`).value = selectEl.value;
+  selectEl.value = '';
+}
+
+function populateSkillSelects() {
+  document.querySelectorAll('[onchange^="fillSkill"]').forEach(sel => {
+    SKILL_HINTS.forEach(h => {
+      const opt = document.createElement('option');
+      opt.value = h.value;
+      opt.textContent = h.label;
+      if (h.disabled) {
+        opt.disabled = true;
+        opt.style.color = 'var(--text3)';
+        opt.style.fontWeight = '700';
+      }
+      sel.appendChild(opt);
+    });
+  });
+}
+
+function loadPreset(selectEl) {
+  const key = selectEl.value;
+  if (!key) return;
+  const students = CLASS_PRESETS[key];
+  if (!students) return;
+  // class name is driven by select
+
+  // 全生徒スロットをリセット（全入力欄をクリア）
+  for (let i = 1; i <= STUDENT_COUNT; i++) {
+    document.getElementById(`s${i}_name`).value = '';
+    document.getElementById(`s${i}_phase`).value = 'Pre';
+    // スキル・セクション・メモをクリア
+    const skill = document.getElementById(`s${i}_skill`);
+    if (skill) skill.value = '';
+    const section = document.getElementById(`s${i}_song_section`);
+    if (section) section.value = '';
+    const memo = document.getElementById(`s${i}_memo`);
+    if (memo) memo.value = '';
+    // 曲・週数をクリア
+    const song = document.getElementById(`s${i}_song`);
+    if (song) song.value = '';
+    const weeks = document.getElementById(`s${i}_song_weeks`);
+    if (weeks) weeks.value = '';
+    // スライダーをリセット
+    ['mastery','practice','motive','autonomy'].forEach(key => {
+      const slider = document.getElementById(`s${i}_${key}_slider`);
+      const val = document.getElementById(`s${i}_${key}_val`);
+      if (slider) { slider.value = 3; }
+      if (val) val.textContent = '3';
+    });
+    // 発表会欄をクリア
+    const cSong = document.getElementById(`s${i}_concert_song`);
+    const cSheet = document.getElementById(`s${i}_concert_sheet`);
+    const cReading = document.getElementById(`s${i}_concert_reading`);
+    if (cSong) cSong.value = '';
+    if (cSheet) cSheet.value = '';
+    if (cReading) cReading.value = '';
+    // 発表会セクションを非表示
+    const cSec = document.getElementById(`s${i}_concert_section`);
+    if (cSec) cSec.style.display = 'none';
+    // 休みトグルをリセット
+    setAbsent(i, false);
+    // 折りたたむ
+    const body = document.getElementById(`body-${i}`);
+    const btn = document.getElementById(`toggle-${i}`);
+    if (body) body.classList.remove('open');
+    if (btn) btn.textContent = '＋';
+  }
+
+  // 今日の日付
+  const todayStr = document.getElementById('lesson-date').value;
+
+  // 体験生徒は当日のみ表示、通常生徒は常に表示（休みフラグは入力画面では無視）
+  const visibleStudents = students.filter(s => {
+    if (s.phase !== '体験') return true;
+    if (!s.lessonDate) return false;
+    return s.lessonDate === todayStr;
+  });
+
+  // 振替生徒：当日・当クラスのみ追加
+  const transferStudents = TRANSFER_DATA.filter(t =>
+    t.date === todayStr && t.className === key
+  ).map(t => ({
+    name: t.name + '（振替）',
+    phase: 'Ph.2' // デフォルト。入力後に変更可
+  }));
+
+  const allStudents = [...visibleStudents, ...transferStudents];
+
+  allStudents.forEach((s, i) => {
+    if (i >= STUDENT_COUNT) return;
+    const idx = i + 1;
+    document.getElementById(`s${idx}_name`).value = s.name;
+    document.getElementById(`s${idx}_phase`).value = s.phase;
+
+    // 前回の曲と週数を自動入力
+    const songKey = key + '___' + s.name;
+    const lastSong = LAST_SONGS[songKey];
+    if (lastSong && lastSong.song) {
+      document.getElementById(`s${idx}_song`).value = lastSong.song;
+      document.getElementById(`s${idx}_song_weeks`).value = lastSong.weeks ? lastSong.weeks + '週目' : '';
+    }
+
+    // 発表会参加生徒は発表会セクションを表示・前回データを入力
+    if (s.concert) {
+      const sec = document.getElementById(`s${idx}_concert_section`);
+      if (sec) sec.style.display = 'flex';
+      const cd = CONCERT_DATA.find(d => d.className === key && d.name === s.name);
+      if (cd) {
+        document.getElementById(`s${idx}_concert_song`).value    = cd.song          || '';
+        document.getElementById(`s${idx}_concert_sheet`).value   = cd.sheetStatus   || '';
+        document.getElementById(`s${idx}_concert_reading`).value = cd.readingStatus || '';
+      }
+    }
+  });
+}
+
+function buildStudentCard(i) {
+  const sliders = [
+    {key:'mastery', label:'習熟度'},
+    {key:'practice', label:'練習度'},
+    {key:'motive', label:'モチベ'},
+    {key:'autonomy', label:'自律度'},
+    ];
+
+  const sliderHTML = sliders.map(s => `
+    <div class="field-group">
+      <div class="field-label">${s.label}</div>
+      <div class="slider-wrap">
+        <input type="range" id="s${i}_${s.key}_slider" min="1" max="5" value="3">
+        <span class="slider-val" id="s${i}_${s.key}_val">3</span>
+      </div>
+    </div>`).join('');
+
+  const phaseOptions = PHASES.map(p =>
+    `<option value="${p}">${p}</option>`).join('');
+
+  return `
+  <div class="student-card" id="card-${i}">
+    <div class="student-header" onclick="toggleCard(${i})">
+      <span class="student-num">${i}</span>
+      <input class="student-name-input" type="text" id="s${i}_name"
+        placeholder="生徒名" onclick="event.stopPropagation()">
+      <select class="student-phase" id="s${i}_phase" onclick="event.stopPropagation()">
+        ${phaseOptions}
+      </select>
+      <button class="toggle-btn" id="toggle-${i}">＋</button>
+      <button id="absent-btn-${i}" onclick="event.stopPropagation();toggleAbsent(${i})" style="background:none;border:1px solid var(--border);border-radius:4px;color:var(--text3);font-size:10px;padding:3px 8px;cursor:pointer;font-family:'Space Mono',monospace;white-space:nowrap;flex-shrink:0;">休み</button>
+    </div>
+    <div class="student-body" id="body-${i}">
+      <div class="fields-grid">
+        <div class="field-group" style="grid-column:1/-1;">
+          <div class="field-label">今日やったスキル <span style="color:var(--text3);font-weight:400;">（下から選択 or 直接入力）</span></div>
+          <select onchange="fillSkill(this, ${i})" style="margin-bottom:6px;font-size:12px;color:var(--text2);">
+            <option value="">── スキルを選ぶ（注釈付き） ──</option>
+          </select>
+          <input type="text" id="s${i}_skill" placeholder="例：SK-204 8ビートtemp60 / 曲練習">
+        </div>
+        <div class="field-group" style="grid-column:1/-1;">
+          <div class="field-label">今日やったセクション</div>
+          <input type="text" id="s${i}_song_section" placeholder="例：Aメロ・サビ・通し・本日終わり">
+        </div>
+        <div style="grid-column:1/-1;display:flex;gap:12px;align-items:center;padding:4px 0;">
+          <span style="font-size:11px;color:var(--text3);">曲：</span>
+          <input type="text" id="s${i}_song" readonly
+            style="flex:1;font-size:12px;color:var(--text3);background:transparent;border:none;padding:0;cursor:default;"
+            placeholder="前回の曲が自動入力されます">
+          <span style="font-size:11px;color:var(--text3);white-space:nowrap;">週数：</span>
+          <input type="text" id="s${i}_song_weeks" readonly
+            style="width:60px;font-size:12px;color:var(--text3);background:transparent;border:none;padding:0;cursor:default;"
+            placeholder="自動">
+        </div>
+
+        ${sliderHTML}
+        <div class="field-group" style="grid-column: 1/-1;">
+          <div class="field-label">メモ</div>
+          <input type="text" id="s${i}_memo" placeholder="任意">
+        </div>
+        <div id="s${i}_concert_section" style="display:none;grid-column:1/-1;flex-direction:column;background:rgba(184,94,34,0.08);border:1px solid var(--accent2);border-radius:6px;padding:10px 12px;gap:8px;">
+          <div style="font-size:11px;font-weight:700;color:var(--accent2);font-family:'Space Mono',monospace;letter-spacing:0.08em;">🎵 発表会（8/2）</div>
+          <div class="fields-grid" style="gap:8px;">
+            <div class="field-group">
+              <div class="field-label">発表会曲名</div>
+              <input type="text" id="s${i}_concert_song" placeholder="曲名">
+            </div>
+            <div class="field-group">
+              <div class="field-label">楽譜準備状況</div>
+              <input type="text" id="s${i}_concert_sheet" placeholder="例：準備済み・注文中">
+            </div>
+            <div class="field-group" style="grid-column:1/-1;">
+              <div class="field-label">譜読み進行状況</div>
+              <input type="text" id="s${i}_concert_reading" placeholder="例：Aメロまで完了">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleCard(i) {
+  const body = document.getElementById(`body-${i}`);
+  const btn = document.getElementById(`toggle-${i}`);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  btn.textContent = isOpen ? '＋' : '－';
+}
+
+function collectData() {
+  const className = document.getElementById('class-select').value || '未設定クラス';
+  const lessonDate = document.getElementById('lesson-date').value;
+
+  const students = [];
+  for (let i = 1; i <= STUDENT_COUNT; i++) {
+    const name = document.getElementById(`s${i}_name`).value.trim();
+    if (!name) continue;
+    students.push({
+      name,
+      phase: document.getElementById(`s${i}_phase`).value,
+      skill: document.getElementById(`s${i}_skill`).value || 'なし',
+      mastery: document.getElementById(`s${i}_mastery_slider`).value,
+      practice: document.getElementById(`s${i}_practice_slider`).value,
+      motive: document.getElementById(`s${i}_motive_slider`).value,
+      autonomy: document.getElementById(`s${i}_autonomy_slider`).value,
+      song: document.getElementById(`s${i}_song`).value || 'なし',
+      songSection: document.getElementById(`s${i}_song_section`).value || 'なし',
+      songWeeks: document.getElementById(`s${i}_song_weeks`).value || '自動',
+      memo: document.getElementById(`s${i}_memo`).value || 'なし',
+      concertSong:          (document.getElementById(`s${i}_concert_song`)?.value    || ''),
+      concertSheetStatus:   (document.getElementById(`s${i}_concert_sheet`)?.value   || ''),
+      concertReadingStatus: (document.getElementById(`s${i}_concert_reading`)?.value || ''),
+    });
+  }
+  return { className, lessonDate, students };
+}
+
+function buildPrompt(data) {
+  const studentLines = data.students.map((s, idx) => `
+生徒${idx + 1}
+- 名前：${s.name}
+- 現在フェーズ：${s.phase}
+- 今日やったスキル：${s.skill}
+- 習熟度：${s.mastery} / 練習してきた度：${s.practice} / モチベーション：${s.motive} / 自律度：${s.autonomy}
+- 今日やった曲：${s.song}
+- 今日やったセクション：${s.songSection}
+- 何週目：${s.songWeeks}
+- メモ：${s.memo}`).join('\n');
+
+  return `あなたはドラム講師のアシスタントです。以下のレッスン記録をもとに判断してください。
+
+### 前提知識
+
+フェーズ：Pre→Ph.1（フォーム）→Ph.2（8ビート基礎★最重要）→Ph.3（バリエーション）→Ph.4（フィルイン入門）→Ph.5（フィルイン発展/ハイハット）→Ph.6（特殊奏法）→中級
+
+曲練習の指針：
+- セクション情報から状態を推測する（「通し」なら全体練習、セクション名なら部分練習）
+- 次曲候補がある場合は移行タイミングを判断する
+
+曲の継続期間による変更提案：
+- 集中力なし・モチベ低め（1〜2）：4週目あたりで曲変更を提案
+- 標準（モチベ3）：8〜10週目で変更を提案
+- 意欲が高い（モチベ4〜5）：16週以上継続もOK、本人が満足するまで
+
+課題判断ルール：
+- 練習度1〜2：課題なし（出しても意味がない）
+- 練習度3以上×習熟度低：同じ内容をもう一週
+- 練習度3以上×習熟度高：次ステップへ
+- モチベ1〜2：楽しさ優先、難度を下げる
+- 自律度4〜5：自主練の方向性を示す課題が有効
+- 自律度1〜2：課題を出さない
+
+グループ特性：1クラス5人・年齢もレベルもバラバラ。上手い子には1tips発展、遅れている子には復習案を。
+メモに「次曲：〇〇」が含まれる場合は曲アドバイスに次曲への移行タイミングを含める。
+メモに「課題：〇〇」が含まれる場合はその内容を課題として必ず採用し、homework=trueとする。homework_reasonにはメモの課題内容をそのまま使う。
+
+### 入力データ
+
+クラス名：${data.className}
+レッスン日：${data.lessonDate}
+${studentLines}
+
+### 出力形式（必ずJSONで返してください。前置きや説明文は不要）
+
+{
+  "score": {
+    "A": <0-5の整数>,
+    "A_comment": "<準備物の多さについて一言>",
+    "B": <0-5の整数>,
+    "B_comment": "<レベル差について一言>",
+    "C": <0-5の整数>,
+    "C_comment": "<曲バラバラ度について一言>",
+    "D": <0-5の整数>,
+    "D_comment": "<自律度の低さについて一言>",
+    "E": <0-5の整数>,
+    "E_comment": "<習熟度停滞について一言>",
+    "total": <合計0-25>,
+    "action": "<先生へのアクション提案1〜2文>"
+  },
+  "common": {
+    "stage": <0-4の整数>,
+    "proposal": "<共通化移行提案1〜2文>"
+  },
+  "students": [
+    {
+      "name": "<名前>",
+      "homework": <true/false>,
+      "homework_reason": "<理由一言>",
+      "next_lesson": "<次回教えること>",
+      "teaching_point": "<説明ポイント・比喩案>",
+      "tips": "<1tips発展案または復習案>",
+      "song_advice": "<曲練習の次のステップ（セクション・完成度目標・曲変更提案など）>"
+    }
+  ],
+  "summary": "<クラス全体まとめ1〜2文>"
+}`;
+}
+
+async function runAI() {
+  const apiKey = document.getElementById('api-key').value.trim();
+  if (!apiKey) { showError('APIキーを入力してください'); return; }
+
+  const data = collectData();
+  if (data.students.length === 0) { showError('生徒名を1人以上入力してください'); return; }
+
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true;
+  document.getElementById('loading').classList.add('visible');
+  document.getElementById('output-area').classList.remove('visible');
+  document.getElementById('error-msg').classList.remove('visible');
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: buildPrompt(data) }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+
+    const json = await res.json();
+    const text = json.content.map(b => b.text || '').join('');
+
+    // JSONブロックを抽出してクリーニング
+    let clean = text;
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) clean = jsonMatch[0];
+    clean = clean
+      .replace(/```json|```/g, '')
+      .replace(/,(\s*[}\]])/g, '$1')
+      .trim();
+
+    let result;
+    try {
+      result = JSON.parse(clean);
+    } catch(parseErr) {
+      // それでも失敗したらエラー詳細を表示
+      throw new Error('AI出力のJSON解析に失敗しました。もう一度実行してください。');
+    }
+    renderOutput(result, data);
+    // AI結果をグローバルに保持（保存ボタン押下時に使う）
+    window._lastResult = result;
+    window._lastData = data;
+
+  } catch (e) {
+    showError('エラー：' + e.message);
+  } finally {
+    btn.disabled = false;
+    document.getElementById('loading').classList.remove('visible');
+  }
+}
+
+function renderOutput(r, data) {
+  // Score
+  const total = r.score.total;
+  const colorClass = total <= 8 ? 'green' : total <= 16 ? 'yellow' : 'red';
+  const judgment = total <= 8 ? '🟢 低負担' : total <= 16 ? '🟡 中負担' : '🔴 高負担';
+
+  const axes = [
+    {key:'A', label:'準備物'},
+    {key:'B', label:'レベル差'},
+    {key:'C', label:'曲バラバラ'},
+    {key:'D', label:'自律度低'},
+    {key:'E', label:'停滞'},
+  ];
+
+  document.getElementById('score-card').innerHTML = `
+    <div class="score-total">
+      <span class="score-badge ${colorClass}">${total}</span>
+      <span class="score-label">/ 25</span>
+      <span class="score-judgment">${judgment}</span>
+    </div>
+    <div class="score-axes">
+      ${axes.map(a => `
+        <div class="axis-item" title="${r.score[a.key + '_comment']}">
+          <div class="axis-label">${a.label}</div>
+          <div class="axis-val">${r.score[a.key]}</div>
+        </div>`).join('')}
+    </div>`;
+
+  // Common
+  const stage = r.common.stage;
+  const stageLabels = ['全員バラバラ','2人で1曲','複数組','1〜2曲','全員1曲'];
+  document.getElementById('common-bar').innerHTML = `
+    <div>
+      <div class="section-label" style="margin-bottom:8px;">曲の共通化</div>
+      <div class="common-stage">
+        ${[0,1,2,3,4].map(n => `<div class="stage-dot ${n === stage ? 'active' : ''}">${n}</div>`).join('')}
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--text2);max-width:60%;line-height:1.6;">${r.common.proposal}</div>`;
+
+  // Action
+  document.getElementById('action-box').textContent = r.score.action;
+
+  // Students
+  document.getElementById('result-cards').innerHTML = r.students.map((s, idx) => `
+    <div class="result-card">
+      <div class="result-card-header">
+        <span class="result-name">${s.name}</span>
+        <span class="homework-badge ${s.homework ? 'homework-yes' : 'homework-no'}">
+          ${s.homework ? '課題あり' : '課題なし'}
+        </span>
+      </div>
+      <div class="result-card-body">
+        <div class="result-row">
+          <div class="result-row-label">理由</div>
+          <div class="result-row-val">${s.homework_reason}</div>
+        </div>
+        <div class="result-row">
+          <div class="result-row-label">次回教えること</div>
+          <div class="result-row-val">${s.next_lesson}</div>
+        </div>
+        <div class="result-row">
+          <div class="result-row-label">説明ポイント</div>
+          <div class="result-row-val">${s.teaching_point}</div>
+        </div>
+        <div class="result-row">
+          <div class="result-row-label">発展 / 復習案</div>
+          <div class="result-row-val">${s.tips}</div>
+        </div>
+        ${s.song_advice ? `
+        <div class="result-row" style="border-top:1px solid var(--border);padding-top:10px;margin-top:2px;">
+          <div class="result-row-label" style="color:var(--accent2);">🎵 曲練習アドバイス</div>
+          <div class="result-row-val">${s.song_advice}</div>
+        </div>` : ''}
+        <div class="override-box">
+          <div class="override-row">
+            <span class="override-label">課題 上書き</span>
+            <div class="override-radio">
+              <label><input type="radio" name="override_hw_${idx}" value="ai" checked> AIのまま</label>
+              <label><input type="radio" name="override_hw_${idx}" value="yes"> 出す</label>
+              <label><input type="radio" name="override_hw_${idx}" value="no"> 出さない</label>
+            </div>
+          </div>
+          <input type="text" class="override-memo" id="override_memo_${idx}"
+            placeholder="メモ（例：楽譜を渡す・次回確認）">
+        </div>
+      </div>
+    </div>`).join('');
+
+  // Summary
+  document.getElementById('summary-box').textContent = r.summary;
+
+  document.getElementById('output-area').classList.add('visible');
+  document.getElementById('output-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function saveWithOverrides() {
+  const result = window._lastResult;
+  const data = window._lastData;
+  if (!result || !data) {
+    showSaveStatus('先にAI判断を実行してください', true);
+    return;
+  }
+
+  // 上書きデータを収集
+  result.students.forEach((s, idx) => {
+    const overrideRadio = document.querySelector(`input[name="override_hw_${idx}"]:checked`);
+    const overrideMemo = document.getElementById(`override_memo_${idx}`);
+    if (overrideRadio && overrideRadio.value !== 'ai') {
+      s.homework_override = overrideRadio.value === 'yes';
+      s.homework_overridden = true;
+    } else {
+      s.homework_overridden = false;
+    }
+    if (overrideMemo && overrideMemo.value) {
+      s.override_memo = overrideMemo.value;
+    }
+  });
+
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.textContent = '保存中...';
+  await saveToSheet(data, result);
+  btn.textContent = '✓ この内容でスプレッドシートに保存';
+  btn.disabled = false;
+}
+
+function clearTaskCache(className) {
+  try {
+    localStorage.removeItem('drumTaskCache_' + className);
+  } catch(e) {}
+}
+
+async function saveToSheet(data, aiResult) {
+  try {
+    const payload = JSON.stringify({ ...data, aiResult });
+    // GASはno-corsだとリダイレクトを追えないためフォーム送信方式で回避
+    const form = new FormData();
+    form.append('payload', payload);
+    await fetch(GAS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: form
+    });
+    clearTaskCache(data.className);
+    showSaveStatus('✓ スプレッドシートに保存しました');
+  } catch(e) {
+    showSaveStatus('保存に失敗しました: ' + e.message, true);
+  }
+}
+
+function showSaveStatus(msg, isError = false) {
+  const el = document.getElementById('save-status');
+  el.textContent = msg;
+  el.style.color = isError ? 'var(--red)' : 'var(--green)';
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+    const tabName = ['input','tasks'][i];
+    btn.classList.toggle('active', tabName === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(el => {
+    el.classList.toggle('active', el.id === 'tab-' + name);
+  });
+  if (name === 'tasks') renderTasks(currentDay);
+}
+
+async function loadReview() {
+  const className = document.getElementById('review-class-select').value;
+  if (!className) { alert('クラスを選択してください'); return; }
+
+  document.getElementById('review-loading').style.display = 'block';
+  document.getElementById('review-content').innerHTML = '';
+
+  try {
+    // POSTでreadアクションを送信（CORSを回避するためFormData使用）
+    const form = new FormData();
+    form.append('payload', JSON.stringify({ action: 'read', className: className }));
+
+    await fetch(GAS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: form
+    });
+
+    // no-corsでは返答が読めないため、少し待ってからスプレッドシートAPIで取得
+    // 代替：Claude APIを使ってスプシのデータを取得する
+    await loadReviewViaClaudeAPI(className);
+
+  } catch(e) {
+    document.getElementById('review-content').innerHTML =
+      '<div style="color:var(--red);font-size:13px;padding:16px;">読み込みエラー：' + e.message + '</div>';
+    document.getElementById('review-loading').style.display = 'none';
+  }
+}
+
+async function loadReviewViaClaudeAPI(className) {
+  // GASのread用エンドポイントをClaude API経由で呼ぶのではなく
+  // スプレッドシートのデータをGASから直接JSONPで取得する方式に変更
+  // scriptタグを使ったJSONP方式でCORSを回避
+  const callbackName = 'gasCallback_' + Date.now();
+
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      cleanup();
+      document.getElementById('review-loading').style.display = 'none';
+      document.getElementById('review-content').innerHTML =
+        '<div style="color:var(--red);font-size:13px;padding:16px;">タイムアウトしました。もう一度試してください。</div>';
+      reject(new Error('timeout'));
+    }, 15000);
+
+    window[callbackName] = function(data) {
+      cleanup();
+      if (data.status === 'error') {
+        document.getElementById('review-content').innerHTML =
+          '<div style="color:var(--red);font-size:13px;padding:16px;">エラー：' + data.message + '</div>';
+      } else {
+        renderReview(data.data, className);
+      }
+      document.getElementById('review-loading').style.display = 'none';
+      resolve();
+    };
+
+    function cleanup() {
+      clearTimeout(timeout);
+      delete window[callbackName];
+      const s = document.getElementById('jsonp-script');
+      if (s) s.remove();
+    }
+
+    const script = document.createElement('script');
+    script.id = 'jsonp-script';
+    script.src = GAS_URL + '?action=read&class=' + encodeURIComponent(className) + '&callback=' + callbackName;
+    document.head.appendChild(script);
+    script.onerror = () => {
+      cleanup();
+      document.getElementById('review-loading').style.display = 'none';
+      document.getElementById('review-content').innerHTML =
+        '<div style="color:var(--red);font-size:13px;padding:16px;">読み込みに失敗しました。</div>';
+      reject(new Error('script error'));
+    };
+  });
+}
+
+function renderReview(rows, className) {
+  if (!rows || rows.length === 0) {
+    const allTrialStudents2 = CLASS_PRESETS[className]
+      ? CLASS_PRESETS[className].filter(s => s.phase === '体験')
+      : [];
+    const transfersForClass2 = TRANSFER_DATA.filter(t => t.className === className);
+    const transferBadge2 = transfersForClass2.length > 0
+      ? transfersForClass2.map(t => {
+          const dateStr = t.date
+            ? new Date(t.date).toLocaleDateString('ja-JP', {month:'long', day:'numeric', weekday:'short'})
+            : '日程未定';
+          const fromStr = t.originalClass ? `${t.originalClass}から` : '';
+          return `<div style="background:rgba(74,110,56,0.1);border:1px solid var(--accent);border-radius:6px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:18px;">🔄</span>
+            <div>
+              <div style="font-weight:700;color:var(--accent);font-size:13px;">振替予定：${t.name}</div>
+              <div style="font-size:12px;color:var(--text2);margin-top:2px;">${dateStr}　${fromStr}</div>
+            </div>
+          </div>`;
+        }).join('')
+      : '';
+
+    const trialBadge = allTrialStudents2.length > 0
+      ? allTrialStudents2.map(s => {
+          const dateStr = s.lessonDate
+            ? new Date(s.lessonDate).toLocaleDateString('ja-JP', {month:'long', day:'numeric', weekday:'short'})
+            : '日程未定';
+          const noteStr = s.note ? `・${s.note}` : '';
+          return `<div style="background:rgba(184,94,34,0.12);border:1px solid var(--accent2);border-radius:6px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:18px;">🔔</span>
+            <div>
+              <div style="font-weight:700;color:var(--accent2);font-size:13px;">体験予定：${s.name}</div>
+              <div style="font-size:12px;color:var(--text2);margin-top:2px;">${dateStr}${noteStr}　キッズプリントを準備</div>
+            </div>
+          </div>`;
+        }).join('')
+      : '';
+    document.getElementById('review-content').innerHTML =
+      transferBadge2 + trialBadge + '<div style="color:var(--text3);font-size:13px;padding:8px 0;">レッスン記録はまだありません</div>';
+    return;
+  }
+
+  // Group by student, get latest record per student
+  const studentMap = {};
+  rows.forEach(row => {
+    const name = row['生徒名'];
+    if (!name) return;
+    if (!studentMap[name] || row['記録日時'] > studentMap[name]['記録日時']) {
+      studentMap[name] = row;
+    }
+  });
+
+  // Get latest lesson date and burden score
+  const latestDate = rows[rows.length - 1]['レッスン日'] || '';
+  const burdenScore = rows[rows.length - 1]['クラス負担度'] || '-';
+  const commonStage = rows[rows.length - 1]['共通化段階'] || '-';
+  const burdenColor = burdenScore <= 8 ? 'var(--green)' : burdenScore <= 16 ? 'var(--yellow)' : 'var(--red)';
+
+  // 体験生徒チェック（予定日付き）
+  const allTrialStudents = CLASS_PRESETS[className]
+    ? CLASS_PRESETS[className].filter(s => s.phase === '体験')
+    : [];
+
+  // 振替生徒バッジ
+  const transfersForClass = TRANSFER_DATA.filter(t => t.className === className);
+  const transferBadge = transfersForClass.length > 0
+    ? transfersForClass.map(t => {
+        const dateStr = t.date
+          ? new Date(t.date).toLocaleDateString('ja-JP', {month:'long', day:'numeric', weekday:'short'})
+          : '日程未定';
+        const fromStr = t.originalClass ? `${t.originalClass}から` : '';
+        const noteStr = t.note ? `・${t.note}` : '';
+        return `<div style="background:rgba(74,110,56,0.1);border:1px solid var(--accent);border-radius:6px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:18px;">🔄</span>
+          <div>
+            <div style="font-weight:700;color:var(--accent);font-size:13px;">振替予定：${t.name}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px;">${dateStr}　${fromStr}${noteStr}</div>
+          </div>
+        </div>`;
+      }).join('')
+    : '';
+
+  const trialBadge = allTrialStudents.length > 0
+    ? allTrialStudents.map(s => {
+        const dateStr = s.lessonDate
+          ? new Date(s.lessonDate).toLocaleDateString('ja-JP', {month:'long', day:'numeric', weekday:'short'})
+          : '日程未定';
+        const noteStr = s.note ? `・${s.note}` : '';
+        return `<div style="background:rgba(184,94,34,0.12);border:1px solid var(--accent2);border-radius:6px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:18px;">🔔</span>
+          <div>
+            <div style="font-weight:700;color:var(--accent2);font-size:13px;">体験予定：${s.name}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px;">${dateStr}${noteStr}　キッズプリントを準備</div>
+          </div>
+        </div>`;
+      }).join('')
+    : '';
+
+  let html = transferBadge + trialBadge + `
+    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+      <div class="score-card" style="flex:1;min-width:200px;padding:14px 16px;">
+        <div class="section-label" style="margin-bottom:6px;">前回レッスン日</div>
+        <div style="font-family:'Space Mono',monospace;font-size:16px;color:var(--text);">${latestDate}</div>
+      </div>
+      <div class="score-card" style="flex:1;min-width:200px;padding:14px 16px;">
+        <div class="section-label" style="margin-bottom:6px;">クラス負担度</div>
+        <div style="font-family:'Space Mono',monospace;font-size:24px;font-weight:700;color:${burdenColor};">${burdenScore}<span style="font-size:12px;color:var(--text3);font-weight:400;"> / 25</span></div>
+      </div>
+      <div class="score-card" style="flex:1;min-width:200px;padding:14px 16px;">
+        <div class="section-label" style="margin-bottom:6px;">曲の共通化段階</div>
+        <div style="font-family:'Space Mono',monospace;font-size:24px;font-weight:700;color:var(--text);">${commonStage}<span style="font-size:12px;color:var(--text3);font-weight:400;"> / 4</span></div>
+      </div>
+    </div>
+    <div class="section-label" style="margin-bottom:10px;">生徒ごとの前回結果</div>`;
+
+  Object.values(studentMap).forEach(row => {
+    const homework = row['課題'] || '-';
+    const hwColor = homework === '出す' ? 'var(--accent)' : 'var(--accent2)';
+    html += `
+    <div class="review-student-row">
+      <div class="review-student-name">
+        <span>${row['生徒名']}</span>
+        ${row['課題上書き']
+          ? `<span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--accent2);border:1px solid var(--accent2);padding:2px 8px;border-radius:4px;">上書:${row['課題上書き']}</span>`
+          : `<span style="font-family:'Space Mono',monospace;font-size:10px;color:${hwColor};border:1px solid ${hwColor};padding:2px 8px;border-radius:4px;">課題${homework}</span>`
+        }
+      </div>
+      ${row['上書きメモ'] ? `<div style="font-size:12px;color:var(--accent2);margin-bottom:6px;padding:0 2px;">📝 ${row['上書きメモ']}</div>` : ''}
+      <div class="review-fields">
+        <div class="review-field">
+          <div class="review-field-label">フェーズ</div>
+          <div class="review-field-val">${row['フェーズ'] || '-'}</div>
+        </div>
+        <div class="review-field">
+          <div class="review-field-label">曲（セクション）</div>
+          <div class="review-field-val">${row['曲名'] || '-'}${row['セクション'] ? ' / ' + row['セクション'] : ''}</div>
+        </div>
+        <div class="review-field review-field-full">
+          <div class="review-field-label">次回教えること</div>
+          <div class="review-field-val">${row['次回教えること'] || '-'}</div>
+        </div>
+        <div class="review-field review-field-full">
+          <div class="review-field-label">説明ポイント</div>
+          <div class="review-field-val">${row['説明ポイント'] || '-'}</div>
+        </div>
+        <div class="review-field review-field-full">
+          <div class="review-field-label">曲アドバイス</div>
+          <div class="review-field-val">${row['曲アドバイス'] || '-'}</div>
+        </div>
+        <div class="review-field review-field-full" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;">
+          <div class="review-field-label" style="margin-bottom:4px;">前回の入力値</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            ${[
+              {label:'習熟度', key:'習熟度'},
+              {label:'練習度', key:'練習度'},
+              {label:'モチベ', key:'モチベ'},
+              {label:'自律度', key:'自律度'},
+            ].map(f => {
+              const val = row[f.key];
+              if (!val) return '';
+              const color = val >= 4 ? 'var(--green)' : val <= 2 ? 'var(--red)' : 'var(--yellow)';
+              return `<span style="font-size:11px;color:var(--text3);">${f.label}：<span style="color:${color};font-weight:700;font-family:'Space Mono',monospace;">${val}</span></span>`;
+            }).join('')}
+          </div>
+        </div>
+        ${row['スキル'] && row['スキル'] !== 'なし' ? `
+        <div class="review-field review-field-full">
+          <div class="review-field-label">前回のスキル</div>
+          <div class="review-field-val">${row['スキル']}</div>
+        </div>` : ''}
+        ${row['メモ'] && row['メモ'] !== 'なし' ? `
+        <div class="review-field review-field-full">
+          <div class="review-field-label">前回のメモ</div>
+          <div class="review-field-val">${row['メモ']}</div>
+        </div>` : ''}
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('review-content').innerHTML = html;
+}
+
+function toggleApiKey() {
+  const input = document.getElementById('api-key');
+  const row = document.getElementById('apikey-row');
+  row.style.display = 'none';
+  document.getElementById('apikey-saved').style.display = 'block';
+}
+
+function showApiKey() {
+  document.getElementById('apikey-row').style.display = 'flex';
+  document.getElementById('apikey-saved').style.display = 'none';
+  document.getElementById('api-key').focus();
+}
+
+let currentDay = 'fri';
+let currentView = 'card';
+
+function switchView(view) {
+  currentView = view;
+  document.getElementById('view-card-btn').style.background = view === 'card' ? 'var(--accent)' : 'none';
+  document.getElementById('view-card-btn').style.color = view === 'card' ? '#fff' : 'var(--text3)';
+  document.getElementById('view-card-btn').style.border = view === 'card' ? 'none' : '1px solid var(--border)';
+  document.getElementById('view-table-btn').style.background = view === 'table' ? 'var(--accent)' : 'none';
+  document.getElementById('view-table-btn').style.color = view === 'table' ? '#fff' : 'var(--text3)';
+  document.getElementById('view-table-btn').style.border = view === 'table' ? 'none' : '1px solid var(--border)';
+  renderTasks(currentDay);
+}
+
+function switchDay(day) {
+  currentDay = day;
+  document.getElementById('day-fri').classList.toggle('active', day === 'fri');
+  document.getElementById('day-sat').classList.toggle('active', day === 'sat');
+  renderTasks(day);
+}
+
+async function renderTasks(day) {
+  if (CONCERT_DATA.length === 0) await loadConcertData();
+  if (HW_CHECKS.length === 0) await loadHwChecks();
+  const prefix = day === 'fri' ? '金曜' : '土曜';
+  const classes = Object.keys(CLASS_PRESETS)
+    .filter(c => c.startsWith(prefix))
+    .sort();
+
+  if (classes.length === 0) {
+    document.getElementById('tasks-content').innerHTML =
+      '<div style="color:var(--text3);font-size:13px;padding:16px;">クラスデータがありません</div>';
+    return;
+  }
+
+  document.getElementById('tasks-loading').style.display = 'block';
+  document.getElementById('tasks-content').innerHTML = '';
+
+  // 全クラス分のデータを並列取得
+  const results = await Promise.all(classes.map(className => fetchClassData(className)));
+
+  document.getElementById('tasks-loading').style.display = 'none';
+
+  let html = '';
+  classes.forEach((className, i) => {
+    const rows = results[i];
+    const students = CLASS_PRESETS[className] || [];
+
+    // 体験・振替バッジ
+    const badges = buildBadges(className);
+
+    // 生徒ごとの最新データ
+    const studentMap = {};
+    if (rows && rows.length > 0) {
+      rows.forEach(row => {
+        const name = row['生徒名'];
+        if (!name) return;
+        if (!studentMap[name] || row['記録日時'] > studentMap[name]['記録日時']) {
+          studentMap[name] = row;
+        }
+      });
+    }
+
+    // 行データをwindowに保存（モーダル用）
+    if (!window._taskRows) window._taskRows = {};
+
+    const studentRows = students
+      .filter(s => s.phase !== '体験')
+      .map(s => {
+        const row = studentMap[s.name] || {};
+        const rowKey = className + '___' + s.name;
+        window._taskRows[rowKey] = row;
+
+        const homework = row['課題上書き'] || row['課題'] || '';
+        const hwBadge = homework === '出す'
+          ? `<span style="font-size:10px;color:var(--accent);border:1px solid var(--accent);padding:1px 6px;border-radius:4px;font-family:'Space Mono',monospace;">課題あり</span>`
+          : '';
+        const nextLesson = row['次回教えること'] || '';
+        const song = row['曲名'] || LAST_SONGS[className + '___' + s.name]?.song || '';
+        const weeks = LAST_SONGS[className + '___' + s.name]?.weeks || '';
+        const overrideMemo = row['上書きメモ'] || '';
+
+        const absentBadge = s.absent
+          ? `<span style="font-size:10px;color:var(--text3);border:1px solid var(--border);padding:1px 6px;border-radius:4px;font-family:'Space Mono',monospace;">今週休み</span>`
+          : '';
+        const concertInfo = s.concert
+          ? (() => {
+              const cd = CONCERT_DATA.find(d => d.className === className && d.name === s.name);
+              if (!cd) return `<div style="font-size:11px;color:var(--accent2);margin-top:4px;">🎵 発表会参加（未登録）</div>`;
+              return `<div style="font-size:11px;color:var(--accent2);margin-top:4px;">🎵 ${cd.song || '曲未定'}　楽譜:${cd.sheetStatus || '-'}　譜読み:${cd.readingStatus || '-'}</div>`;
+            })()
+          : '';
+
+        const hwCheckKey = 'hwCheck_' + rowKey;
+        const hwChecked = localStorage.getItem(hwCheckKey) === '1';
+        const hwCheckBtn = homework === '出す'
+          ? `<button onclick="event.stopPropagation();toggleHwCheck('${hwCheckKey}', this)"
+              style="font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:'Space Mono',monospace;flex-shrink:0;
+              background:${hwChecked ? 'var(--green)' : 'none'};
+              color:${hwChecked ? '#fff' : 'var(--text3)'};
+              border:1px solid ${hwChecked ? 'var(--green)' : 'var(--border)'};"
+              data-key="${hwCheckKey}">
+              ${hwChecked ? '✓ 準備済み' : '課題準備'}
+            </button>`
+          : '';
+
+        return `<div class="task-student-row" style="cursor:pointer;${s.absent ? 'opacity:0.45;' : ''}"
+          onclick="openStudentModal('${s.name}', window._taskRows['${rowKey}'])">
+          <div class="task-student-name">
+            ${s.name} ${absentBadge} ${hwBadge}
+            <span style="margin-left:auto;">${hwCheckBtn}</span>
+            <span style="font-size:11px;color:var(--text3);">›</span>
+          </div>
+          ${!s.absent && nextLesson ? `<div class="task-next">${nextLesson}</div>` : ''}
+          ${!s.absent && overrideMemo ? `<div class="task-next" style="color:var(--accent2);">📝 ${overrideMemo}</div>` : ''}
+          ${!s.absent && song ? `<div class="task-song">🎵 ${song}${weeks ? ' ' + weeks + '週目' : ''}</div>` : ''}
+          ${concertInfo}
+        </div>`;
+      }).join('');
+
+    html += `<div class="task-class-card">
+      <div class="task-class-header">${className}</div>
+      ${badges}
+      ${studentRows || '<div class="task-student-row"><div class="task-song">記録なし</div></div>'}
+    </div>`;
+  });
+
+  if (currentView === 'table') {
+    document.getElementById('tasks-content').innerHTML = renderTasksTable(classes, results);
+  } else {
+    document.getElementById('tasks-content').innerHTML = html;
+  }
+}
+
+function openStudentModal(name, row) {
+  document.getElementById('modal-name').textContent = name;
+  const homework = row['課題上書き'] || row['課題'] || '-';
+  const hwColor = homework === '出す' ? 'var(--accent)' : 'var(--accent2)';
+
+  const fields = [
+    {label: '課題', val: homework, color: hwColor},
+    {label: '次回教えること', val: row['次回教えること'] || '-'},
+    {label: '説明ポイント', val: row['説明ポイント'] || '-'},
+    {label: '発展 / 復習案', val: row['発展/復習案'] || '-'},
+    {label: '曲アドバイス', val: row['曲アドバイス'] || '-'},
+    {label: '上書きメモ', val: row['上書きメモ'] || '-'},
+  ].filter(f => f.val && f.val !== '-' && f.val !== 'なし');
+
+  document.getElementById('modal-body').innerHTML = fields.map(f => `
+    <div class="modal-row">
+      <div class="modal-row-label">${f.label}</div>
+      <div class="modal-row-val" style="${f.color ? 'color:' + f.color : ''}">${f.val}</div>
+    </div>`).join('') || '<div style="color:var(--text3);font-size:13px;">記録がまだありません</div>';
+
+  document.getElementById('student-modal').classList.add('open');
+}
+
+function closeStudentModal() {
+  document.getElementById('student-modal').classList.remove('open');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('student-modal')) closeStudentModal();
+}
+
+function renderTasksTable(classes, results) {
+  let html = `<table class="prep-table">
+    <thead>
+      <tr>
+        <th>クラス</th>
+        <th>生徒名</th>
+        <th>曲</th>
+        <th>週</th>
+        <th>課題</th>
+        <th>次回教えること</th>
+        <th>発表会曲</th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  classes.forEach((className, i) => {
+    const rows = results[i] || [];
+    const students = CLASS_PRESETS[className] || [];
+
+    const studentMap = {};
+    rows.forEach(row => {
+      const name = row['生徒名'];
+      if (!name) return;
+      if (!studentMap[name] || row['記録日時'] > studentMap[name]['記録日時']) {
+        studentMap[name] = row;
+      }
+    });
+
+    // 今週の日曜日を計算
+    const today = new Date();
+    const thisSunday = new Date(today);
+    thisSunday.setDate(today.getDate() - today.getDay()); // 今週の日曜
+    thisSunday.setHours(0, 0, 0, 0);
+
+    students.filter(s => {
+      if (s.phase !== '体験') return true;
+      if (!s.lessonDate) return false;
+      const lessonDate = new Date(s.lessonDate);
+      lessonDate.setHours(0, 0, 0, 0);
+      // 今週の日曜〜当日までの間に体験予定があれば表示
+      return lessonDate >= thisSunday && lessonDate <= today;
+    }).forEach(s => {
+      const row = studentMap[s.name] || {};
+      const homework = row['課題上書き'] || row['課題'] || '';
+      const hwColor = homework === '出す' ? 'var(--accent)' : 'var(--text3)';
+      const song = row['曲名'] || LAST_SONGS[className + '___' + s.name]?.song || '';
+      const weeks = LAST_SONGS[className + '___' + s.name]?.weeks || '';
+      const nextLesson = row['次回教えること'] || '';
+      const cd = CONCERT_DATA.find(d => d.className === className && d.name === s.name);
+      const concertSong = cd?.song || '';
+      const overrideMemo = row['上書きメモ'] || '';
+
+      const hwChecked = HW_CHECKS.some(c => c.className === className && c.name === s.name);
+      const hwCell = homework === '出す'
+        ? `<button onclick="event.stopPropagation();toggleHwCheckGas('${className}','${s.name}',this)"
+            style="font-size:11px;padding:3px 10px;border-radius:4px;cursor:pointer;font-family:'Space Mono',monospace;
+            background:${hwChecked ? 'var(--green)' : 'none'};
+            color:${hwChecked ? '#fff' : 'var(--text3)'};
+            border:1px solid ${hwChecked ? 'var(--green)' : 'var(--border)'};">
+            ${hwChecked ? '✓ 済' : '準備する'}
+          </button>`
+        : `<span style="color:var(--text3);font-size:11px;">なし</span>`;
+
+      const trialBadge = s.phase === '体験'
+        ? `<span style="font-size:10px;color:var(--accent2);border:1px solid var(--accent2);padding:1px 5px;border-radius:3px;margin-left:4px;">体験</span>`
+        : '';
+      html += `<tr class="${s.absent ? 'absent-row' : ''}">
+        <td style="color:var(--accent);font-family:'Space Mono',monospace;font-size:10px;white-space:nowrap;">${className}</td>
+        <td style="font-weight:${s.absent ? '400' : '700'};white-space:nowrap;">
+          ${s.name}${trialBadge}${s.absent ? ' <span style="font-size:10px;color:var(--text3);">(休)</span>' : ''}
+        </td>
+        <td>${song}${weeks ? `<span style="color:var(--text3);font-size:10px;"> ${weeks}週</span>` : ''}</td>
+        <td style="text-align:center;">${weeks || '-'}</td>
+        <td>${hwCell}</td>
+        <td style="font-size:11px;color:var(--text2);max-width:160px;">
+          ${overrideMemo
+            ? `<span style="color:var(--accent2);">📝 ${overrideMemo}</span>`
+            : (row['課題理由'] || '')}
+        </td>
+        <td style="max-width:200px;">${nextLesson}</td>
+        <td style="color:var(--accent2);">${concertSong}</td>
+      </tr>`;
+    });
+  });
+
+  html += '</tbody></table>';
+  return html;
+}
+
+function toggleHwCheck(key, btn) {
+  // カードビュー用（localStorage）
+  const checked = localStorage.getItem(key) === '1';
+  const newVal = checked ? '0' : '1';
+  localStorage.setItem(key, newVal);
+  btn.style.background = newVal === '1' ? 'var(--green)' : 'none';
+  btn.style.color = newVal === '1' ? '#fff' : 'var(--text3)';
+  btn.style.border = `1px solid ${newVal === '1' ? 'var(--green)' : 'var(--border)'}`;
+  btn.textContent = newVal === '1' ? '✓ 準備済み' : '課題準備';
+}
+
+async function toggleHwCheckGas(className, name, btn) {
+  // テーブルビュー用（GAS連携）
+  const checked = HW_CHECKS.some(c => c.className === className && c.name === name);
+  const newChecked = !checked;
+  // 即時UI更新
+  btn.style.background = newChecked ? 'var(--green)' : 'none';
+  btn.style.color = newChecked ? '#fff' : 'var(--text3)';
+  btn.style.border = `1px solid ${newChecked ? 'var(--green)' : 'var(--border)'}`;
+  btn.textContent = newChecked ? '✓ 済' : '準備する';
+  // GASに保存
+  await saveHwCheck(className, name, newChecked);
+}
+
+function buildBadges(className) {
+  let html = '';
+
+  // 振替バッジ
+  const transfers = TRANSFER_DATA.filter(t => t.className === className);
+  transfers.forEach(t => {
+    const dateStr = t.date
+      ? new Date(t.date).toLocaleDateString('ja-JP', {month:'long', day:'numeric', weekday:'short'})
+      : '日程未定';
+    html += `<div style="padding:8px 14px;background:rgba(74,110,56,0.08);border-bottom:1px solid var(--border);font-size:12px;color:var(--accent);">
+      🔄 振替：${t.name}　${dateStr}　${t.originalClass ? t.originalClass + 'から' : ''}
+    </div>`;
+  });
+
+  // 体験バッジ
+  const trials = (CLASS_PRESETS[className] || []).filter(s => s.phase === '体験');
+  trials.forEach(s => {
+    const dateStr = s.lessonDate
+      ? new Date(s.lessonDate).toLocaleDateString('ja-JP', {month:'long', day:'numeric', weekday:'short'})
+      : '日程未定';
+    html += `<div style="padding:8px 14px;background:rgba(184,94,34,0.08);border-bottom:1px solid var(--border);font-size:12px;color:var(--accent2);">
+      🔔 体験：${s.name}　${dateStr}${s.note ? '　' + s.note : ''}　キッズプリント準備
+    </div>`;
+  });
+
+  return html;
+}
+
+async function fetchClassData(className) {
+  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  const cacheKey = 'drumTaskCache_' + className;
+
+  // キャッシュ確認（1週間以内なら即返す）
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Date.now() - parsed.ts < WEEK_MS) {
+        // バックグラウンドで更新
+        fetchClassDataFromGAS(className).then(rows => {
+          if (rows.length > 0) {
+            localStorage.setItem(cacheKey, JSON.stringify({data: rows, ts: Date.now()}));
+          }
+        });
+        return parsed.data;
+      }
+    }
+  } catch(e) {}
+
+  // キャッシュなし → GASから取得
+  const rows = await fetchClassDataFromGAS(className);
+  if (rows.length > 0) {
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify({data: rows, ts: Date.now()}));
+    } catch(e) {}
+  }
+  return rows;
+}
+
+async function fetchClassDataFromGAS(className) {
+  return new Promise((resolve) => {
+    const callbackName = 'classCallback_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    const scriptId = 'class-script-' + callbackName;
+    const timeout = setTimeout(() => {
+      delete window[callbackName];
+      const s = document.getElementById(scriptId);
+      if (s) s.remove();
+      resolve([]);
+    }, 10000);
+
+    window[callbackName] = function(data) {
+      clearTimeout(timeout);
+      delete window[callbackName];
+      const s = document.getElementById(scriptId);
+      if (s) s.remove();
+      resolve(data.status === 'ok' ? data.data : []);
+    };
+
+    const script = document.createElement('script');
+    script.id = scriptId;
+    script.src = GAS_URL + '?action=read&class=' + encodeURIComponent(className) + '&callback=' + callbackName;
+    document.head.appendChild(script);
+    script.onerror = () => { clearTimeout(timeout); resolve([]); };
+  });
+}
+
+function toggleAbsent(i) {
+  const btn = document.getElementById(`absent-btn-${i}`);
+  const isAbsent = btn.dataset.absent === '1';
+  setAbsent(i, !isAbsent);
+}
+
+function setAbsent(i, absent) {
+  const btn = document.getElementById(`absent-btn-${i}`);
+  if (!btn) return;
+  btn.dataset.absent = absent ? '1' : '0';
+  btn.style.background = absent ? 'var(--border)' : 'none';
+  btn.style.color = absent ? 'var(--text2)' : 'var(--text3)';
+  btn.textContent = absent ? '休み✓' : '休み';
+  // 入力欄を無効化
+  const body = document.getElementById(`body-${i}`);
+  if (body) {
+    body.querySelectorAll('input, select, textarea').forEach(el => {
+      el.disabled = absent;
+    });
+    body.style.opacity = absent ? '0.4' : '1';
+    body.style.pointerEvents = absent ? 'none' : '';
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+
+init();
+</script>
+</body>
+</html>
