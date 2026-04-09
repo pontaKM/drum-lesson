@@ -878,15 +878,9 @@
 
   <!-- Tab: Tasks -->
   <div class="tab-content" id="tab-tasks">
-    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
       <button class="day-btn active" id="day-fri" onclick="switchDay('fri')">金曜</button>
       <button class="day-btn" id="day-sat" onclick="switchDay('sat')">土曜</button>
-      <div style="margin-left:auto;display:flex;gap:4px;">
-        <button id="view-card-btn" onclick="switchView('card')"
-          style="background:var(--accent);color:#fff;border:none;border-radius:4px;padding:6px 12px;font-size:11px;font-family:'Space Mono',monospace;cursor:pointer;">カード</button>
-        <button id="view-table-btn" onclick="switchView('table')"
-          style="background:none;border:1px solid var(--border);border-radius:4px;padding:6px 12px;font-size:11px;font-family:'Space Mono',monospace;cursor:pointer;color:var(--text3);">テーブル</button>
-      </div>
     </div>
     <div id="tasks-loading" style="display:none;text-align:center;padding:32px;color:var(--text3);font-size:13px;">読み込み中...</div>
     <div id="tasks-content"></div>
@@ -2137,18 +2131,7 @@ function showApiKey() {
 }
 
 let currentDay = 'fri';
-let currentView = 'card';
 
-function switchView(view) {
-  currentView = view;
-  document.getElementById('view-card-btn').style.background = view === 'card' ? 'var(--accent)' : 'none';
-  document.getElementById('view-card-btn').style.color = view === 'card' ? '#fff' : 'var(--text3)';
-  document.getElementById('view-card-btn').style.border = view === 'card' ? 'none' : '1px solid var(--border)';
-  document.getElementById('view-table-btn').style.background = view === 'table' ? 'var(--accent)' : 'none';
-  document.getElementById('view-table-btn').style.color = view === 'table' ? '#fff' : 'var(--text3)';
-  document.getElementById('view-table-btn').style.border = view === 'table' ? 'none' : '1px solid var(--border)';
-  renderTasks(currentDay);
-}
 
 function switchDay(day) {
   currentDay = day;
@@ -2263,32 +2246,29 @@ async function renderTasks(day) {
     </div>`;
   });
 
-  if (currentView === 'table') {
-    document.getElementById('tasks-content').innerHTML = renderTasksTable(classes, results);
-  } else {
-    document.getElementById('tasks-content').innerHTML = html;
-  }
+  document.getElementById('tasks-content').innerHTML = renderTasksTable(classes, results);
 }
 
 function openStudentModal(name, row) {
   document.getElementById('modal-name').textContent = name;
-  const homework = row['課題上書き'] || row['課題'] || '-';
-  const hwColor = homework === '出す' ? 'var(--accent)' : 'var(--accent2)';
 
   const fields = [
-    {label: '課題', val: homework, color: hwColor},
-    {label: '次回教えること', val: row['次回教えること'] || '-'},
-    {label: '説明ポイント', val: row['説明ポイント'] || '-'},
-    {label: '発展 / 復習案', val: row['発展/復習案'] || '-'},
-    {label: '曲アドバイス', val: row['曲アドバイス'] || '-'},
-    {label: '上書きメモ', val: row['上書きメモ'] || '-'},
-  ].filter(f => f.val && f.val !== '-' && f.val !== 'なし');
+    {label: 'フェーズ',    val: row['フェーズ']  || ''},
+    {label: 'スキル',      val: row['スキル']    || ''},
+    {label: '曲名',        val: row['曲名']      || ''},
+    {label: 'セクション',  val: row['セクション'] || ''},
+    {label: '何週目',      val: row['何週目']    || ''},
+    {label: 'メモ',        val: row['メモ']      || ''},
+    {label: 'レッスン日',  val: row['レッスン日'] ? new Date(row['レッスン日']).toLocaleDateString('ja-JP') : ''},
+  ].filter(f => f.val && f.val !== 'なし');
 
-  document.getElementById('modal-body').innerHTML = fields.map(f => `
-    <div class="modal-row">
-      <div class="modal-row-label">${f.label}</div>
-      <div class="modal-row-val" style="${f.color ? 'color:' + f.color : ''}">${f.val}</div>
-    </div>`).join('') || '<div style="color:var(--text3);font-size:13px;">記録がまだありません</div>';
+  document.getElementById('modal-body').innerHTML = fields.length
+    ? fields.map(f => `
+        <div class="modal-row">
+          <div class="modal-row-label">${f.label}</div>
+          <div class="modal-row-val">${f.val}</div>
+        </div>`).join('')
+    : '<div style="color:var(--text3);font-size:13px;">記録がまだありません</div>';
 
   document.getElementById('student-modal').classList.add('open');
 }
@@ -2376,7 +2356,13 @@ function renderTasksTable(classes, results) {
         ? `<span style="font-size:10px;color:var(--accent2);border:1px solid var(--accent2);padding:1px 5px;border-radius:3px;margin-left:4px;">体験</span>`
         : '';
 
-      html += `<tr class="${s.absent ? 'absent-row' : ''}">
+      const rowKey2 = className + '___' + s.name;
+      if (!window._taskRows) window._taskRows = {};
+      window._taskRows[rowKey2] = row;
+
+      html += `<tr class="${s.absent ? 'absent-row' : ''}"
+        style="cursor:pointer;"
+        onclick="openStudentModal('${s.name}', window._taskRows['${rowKey2}'])">
         <td style="color:var(--accent);font-family:'Space Mono',monospace;font-size:10px;white-space:nowrap;">${className}</td>
         <td style="font-weight:700;white-space:nowrap;">${s.name}${trialBadge}${s.absent ? ' <span style="font-size:10px;color:var(--text3);">(休)</span>' : ''}</td>
         <td style="font-size:11px;white-space:nowrap;">${phase}</td>
@@ -2385,7 +2371,7 @@ function renderTasksTable(classes, results) {
         <td style="font-size:11px;">${section}</td>
         <td style="font-size:11px;text-align:center;">${weeks}</td>
         <td style="font-size:11px;max-width:160px;color:var(--text2);">${memo}</td>
-        <td>${hwCell}</td>
+        <td onclick="event.stopPropagation();">${hwCell}</td>
       </tr>`;
     });
   });
