@@ -2307,10 +2307,13 @@ function renderTasksTable(classes, results) {
       <tr>
         <th>クラス</th>
         <th>生徒名</th>
-        <th>曲</th>
+        <th>フェーズ</th>
+        <th>スキル</th>
+        <th>曲名</th>
+        <th>セクション</th>
         <th>週</th>
+        <th>メモ</th>
         <th>課題</th>
-        <th>次回教えること</th>
         <th>発表会曲</th>
       </tr>
     </thead>
@@ -2329,9 +2332,8 @@ function renderTasksTable(classes, results) {
       }
     });
 
-    // 今週の日曜日〜今日を計算（時刻を除いて比較）
     const today = new Date();
-    today.setHours(23, 59, 59, 0); // 今日の終わり
+    today.setHours(23, 59, 59, 0);
     const thisSunday = new Date();
     thisSunday.setDate(new Date().getDate() - new Date().getDay());
     thisSunday.setHours(0, 0, 0, 0);
@@ -2340,21 +2342,23 @@ function renderTasksTable(classes, results) {
       if (s.phase !== '体験') return true;
       if (!s.lessonDate) return false;
       const lessonDate = new Date(s.lessonDate);
-      lessonDate.setHours(12, 0, 0, 0); // 正午で比較
+      lessonDate.setHours(12, 0, 0, 0);
       return lessonDate >= thisSunday && lessonDate <= today;
     }).forEach(s => {
       const row = studentMap[s.name] || {};
-      const homework = row['課題上書き'] || row['課題'] || '';
-      const hwColor = homework === '出す' ? 'var(--accent)' : 'var(--text3)';
-      const song = row['曲名'] || LAST_SONGS[className + '___' + s.name]?.song || '';
-      const weeks = LAST_SONGS[className + '___' + s.name]?.weeks || '';
-      const nextLesson = row['次回教えること'] || '';
-      const cd = CONCERT_DATA.find(d => d.className === className && d.name === s.name);
-      const concertSong = cd?.song || '';
-      const overrideMemo = row['上書きメモ'] || '';
 
-      const hwChecked = HW_CHECKS.some(c => c.className === className && c.name === s.name);
-      const hwCell = homework === '出す'
+      // 入力値を直接表示
+      const phase       = row['フェーズ'] || s.phase || '';
+      const skill       = row['スキル']   || '';
+      const song        = row['曲名']     || LAST_SONGS[className + '___' + s.name]?.song || '';
+      const section     = row['セクション'] || '';
+      const weeks       = row['何週目']   || LAST_SONGS[className + '___' + s.name]?.weeks || '';
+      const memo        = row['メモ']     || '';
+
+      // 課題チェックボタン（課題上書き → 課題 の優先順）
+      const homework    = row['課題上書き'] || row['課題'] || '';
+      const hwChecked   = HW_CHECKS.some(c => c.className === className && c.name === s.name);
+      const hwCell      = homework === '出す'
         ? `<button onclick="event.stopPropagation();toggleHwCheckGas('${className}','${s.name}',this)"
             style="font-size:11px;padding:3px 10px;border-radius:4px;cursor:pointer;font-family:'Space Mono',monospace;
             background:${hwChecked ? 'var(--green)' : 'none'};
@@ -2364,24 +2368,23 @@ function renderTasksTable(classes, results) {
           </button>`
         : `<span style="color:var(--text3);font-size:11px;">なし</span>`;
 
-      const trialBadge = s.phase === '体験'
+      const cd          = CONCERT_DATA.find(d => d.className === className && d.name === s.name);
+      const concertSong = cd?.song || '';
+      const trialBadge  = s.phase === '体験'
         ? `<span style="font-size:10px;color:var(--accent2);border:1px solid var(--accent2);padding:1px 5px;border-radius:3px;margin-left:4px;">体験</span>`
         : '';
+
       html += `<tr class="${s.absent ? 'absent-row' : ''}">
         <td style="color:var(--accent);font-family:'Space Mono',monospace;font-size:10px;white-space:nowrap;">${className}</td>
-        <td style="font-weight:${s.absent ? '400' : '700'};white-space:nowrap;">
-          ${s.name}${trialBadge}${s.absent ? ' <span style="font-size:10px;color:var(--text3);">(休)</span>' : ''}
-        </td>
-        <td>${song}${weeks ? `<span style="color:var(--text3);font-size:10px;"> ${weeks}週</span>` : ''}</td>
-        <td style="text-align:center;">${weeks || '-'}</td>
+        <td style="font-weight:700;white-space:nowrap;">${s.name}${trialBadge}${s.absent ? ' <span style="font-size:10px;color:var(--text3);">(休)</span>' : ''}</td>
+        <td style="font-size:11px;white-space:nowrap;">${phase}</td>
+        <td style="font-size:11px;max-width:120px;">${skill}</td>
+        <td style="font-size:11px;">${song}</td>
+        <td style="font-size:11px;">${section}</td>
+        <td style="font-size:11px;text-align:center;">${weeks}</td>
+        <td style="font-size:11px;max-width:160px;color:var(--text2);">${memo}</td>
         <td>${hwCell}</td>
-        <td style="font-size:11px;color:var(--text2);max-width:160px;">
-          ${overrideMemo
-            ? `<span style="color:var(--accent2);">📝 ${overrideMemo}</span>`
-            : (row['課題理由'] || '')}
-        </td>
-        <td style="max-width:200px;">${nextLesson}</td>
-        <td style="color:var(--accent2);">${concertSong}</td>
+        <td style="font-size:11px;color:var(--accent2);">${concertSong}</td>
       </tr>`;
     });
   });
