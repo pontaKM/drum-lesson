@@ -2314,7 +2314,6 @@ function renderTasksTable(classes, results) {
         <th>週</th>
         <th>メモ</th>
         <th>課題</th>
-        <th>発表会曲</th>
       </tr>
     </thead>
     <tbody>`;
@@ -2347,10 +2346,15 @@ function renderTasksTable(classes, results) {
     }).forEach(s => {
       const row = studentMap[s.name] || {};
 
-      // 入力値を直接表示
+      // 入力値を直接表示（発表会曲があればそちらを優先）
       const phase       = row['フェーズ'] || s.phase || '';
       const skill       = row['スキル']   || '';
-      const song        = row['曲名']     || LAST_SONGS[className + '___' + s.name]?.song || '';
+      const cd          = CONCERT_DATA.find(d => d.className === className && d.name === s.name);
+      const concertSong = cd?.song || '';
+      const baseSong    = row['曲名'] || LAST_SONGS[className + '___' + s.name]?.song || '';
+      const song        = concertSong
+        ? `${concertSong} <span style="font-size:10px;color:var(--accent2);">🎵発表会</span>`
+        : baseSong;
       const section     = row['セクション'] || '';
       const weeks       = row['何週目']   || LAST_SONGS[className + '___' + s.name]?.weeks || '';
       const memo        = row['メモ']     || '';
@@ -2368,8 +2372,6 @@ function renderTasksTable(classes, results) {
           </button>`
         : `<span style="color:var(--text3);font-size:11px;">なし</span>`;
 
-      const cd          = CONCERT_DATA.find(d => d.className === className && d.name === s.name);
-      const concertSong = cd?.song || '';
       const trialBadge  = s.phase === '体験'
         ? `<span style="font-size:10px;color:var(--accent2);border:1px solid var(--accent2);padding:1px 5px;border-radius:3px;margin-left:4px;">体験</span>`
         : '';
@@ -2384,7 +2386,6 @@ function renderTasksTable(classes, results) {
         <td style="font-size:11px;text-align:center;">${weeks}</td>
         <td style="font-size:11px;max-width:160px;color:var(--text2);">${memo}</td>
         <td>${hwCell}</td>
-        <td style="font-size:11px;color:var(--accent2);">${concertSong}</td>
       </tr>`;
     });
   });
