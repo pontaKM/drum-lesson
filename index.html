@@ -1318,11 +1318,6 @@ function loadPreset(selectEl) {
     if (memo) memo.value = '';
     const next = document.getElementById(`s${i}_next`);
     if (next) next.value = '';
-    // 曲・週数をクリア
-    const song = document.getElementById(`s${i}_song`);
-    if (song) song.value = '';
-    const weeks = document.getElementById(`s${i}_song_weeks`);
-    if (weeks) weeks.value = '';
     // スライダーリセット（AI機能復活時に復元）
     // 発表会欄をクリア
     const cSong = document.getElementById(`s${i}_concert_song`);
@@ -1369,14 +1364,6 @@ function loadPreset(selectEl) {
     document.getElementById(`s${idx}_name`).value = s.name;
     document.getElementById(`s${idx}_phase`).value = s.phase;
 
-    // 前回の曲と週数を自動入力
-    const songKey = key + '___' + s.name;
-    const lastSong = LAST_SONGS[songKey];
-    if (lastSong && lastSong.song) {
-      document.getElementById(`s${idx}_song`).value = lastSong.song;
-      document.getElementById(`s${idx}_song_weeks`).value = lastSong.weeks ? lastSong.weeks + '週目' : '';
-    }
-
     // 発表会参加生徒は発表会セクションを表示・前回データを入力
     if (s.concert) {
       const sec = document.getElementById(`s${idx}_concert_section`);
@@ -1420,17 +1407,6 @@ function buildStudentCard(i) {
     </div>
     <div class="student-body" id="body-${i}">
       <div class="fields-grid">
-        <div style="grid-column:1/-1;display:flex;gap:12px;align-items:center;padding:4px 0;">
-          <span style="font-size:11px;color:var(--text3);">曲：</span>
-          <input type="text" id="s${i}_song" readonly
-            style="flex:1;font-size:12px;color:var(--text3);background:transparent;border:none;padding:0;cursor:default;"
-            placeholder="前回の曲が自動入力されます">
-          <span style="font-size:11px;color:var(--text3);white-space:nowrap;">週数：</span>
-          <input type="text" id="s${i}_song_weeks" readonly
-            style="width:60px;font-size:12px;color:var(--text3);background:transparent;border:none;padding:0;cursor:default;"
-            placeholder="自動">
-        </div>
-
         <div class="field-group" style="grid-column:1/-1;">
           <div class="field-label">今回やったこと <span style="color:var(--text3);font-weight:400;">（曲・セクション・内容など自由に）</span></div>
           <textarea id="s${i}_memo" rows="3" placeholder="例：Aメロ〜Bメロ通し。右手のアクセントが安定してきた。テンポ80まで上げた。" style="width:100%;font-size:13px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text1);resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box;"></textarea>
@@ -1485,10 +1461,10 @@ function collectData() {
       practice: '3',
       motive: '3',
       autonomy: '3',
-      skill: 'なし',  // AI接続時にスキルマスターから参照
-      song: document.getElementById(`s${i}_song`).value || 'なし',
-      songSection: 'なし',  // memoに統合
-      songWeeks: document.getElementById(`s${i}_song_weeks`).value || '自動',
+      skill: 'なし',     // AI接続時にスキルマスターから参照
+      song: 'なし',      // AI接続時に「今回やったこと」から自動判別
+      songSection: 'なし',
+      songWeeks: 'なし',
       memo: document.getElementById(`s${i}_memo`).value || 'なし',
       nextLesson: document.getElementById(`s${i}_next`).value || 'なし',
       concertSong:          (document.getElementById(`s${i}_concert_song`)?.value    || ''),
@@ -1504,7 +1480,6 @@ function buildPrompt(data) {
 生徒${idx + 1}
 - 名前：${s.name}
 - 現在フェーズ：${s.phase}
-- 今日やった曲：${s.song}（${s.songWeeks}週目）
 - 今回やったこと：${s.memo}
 - 次回やること（講師メモ）：${s.nextLesson}`).join('\n');
 
@@ -2058,10 +2033,6 @@ function renderReview(rows, className) {
           <div class="review-field-label">フェーズ</div>
           <div class="review-field-val">${row['フェーズ'] || '-'}</div>
         </div>
-        <div class="review-field">
-          <div class="review-field-label">曲（セクション）</div>
-          <div class="review-field-val">${row['曲名'] || '-'}${row['セクション'] ? ' / ' + row['セクション'] : ''}</div>
-        </div>
         <div class="review-field review-field-full">
           <div class="review-field-label">次回教えること</div>
           <div class="review-field-val">${row['次回教えること'] || '-'}</div>
@@ -2187,8 +2158,6 @@ async function renderTasks(day) {
           ? `<span style="font-size:10px;color:var(--accent);border:1px solid var(--accent);padding:1px 6px;border-radius:4px;font-family:'Space Mono',monospace;">課題あり</span>`
           : '';
         const nextLesson = row['次回教えること'] || '';
-        const song = row['曲名'] || LAST_SONGS[className + '___' + s.name]?.song || '';
-        const weeks = LAST_SONGS[className + '___' + s.name]?.weeks || '';
         const overrideMemo = row['上書きメモ'] || '';
 
         const absentBadge = s.absent
@@ -2224,7 +2193,6 @@ async function renderTasks(day) {
           </div>
           ${!s.absent && nextLesson ? `<div class="task-next">${nextLesson}</div>` : ''}
           ${!s.absent && overrideMemo ? `<div class="task-next" style="color:var(--accent2);">📝 ${overrideMemo}</div>` : ''}
-          ${!s.absent && song ? `<div class="task-song">🎵 ${song}${weeks ? ' ' + weeks + '週目' : ''}</div>` : ''}
           ${concertInfo}
         </div>`;
       }).join('');
@@ -2243,13 +2211,10 @@ function openStudentModal(name, row) {
   document.getElementById('modal-name').textContent = name;
 
   const fields = [
-    {label: 'フェーズ',    val: row['フェーズ']  || ''},
-    {label: 'スキル',      val: row['スキル']    || ''},
-    {label: '曲名',        val: row['曲名']      || ''},
-    {label: 'セクション',  val: row['セクション'] || ''},
-    {label: '何週目',      val: row['何週目']    || ''},
-    {label: 'メモ',        val: row['メモ']      || ''},
-    {label: 'レッスン日',  val: row['レッスン日'] ? new Date(row['レッスン日']).toLocaleDateString('ja-JP') : ''},
+    {label: 'フェーズ',          val: row['フェーズ']      || ''},
+    {label: '今回やったこと',    val: row['メモ']           || ''},
+    {label: '次回やること',      val: row['次回教えること'] || ''},
+    {label: 'レッスン日',        val: row['レッスン日'] ? new Date(row['レッスン日']).toLocaleDateString('ja-JP') : ''},
   ].filter(f => f.val && f.val !== 'なし');
 
   document.getElementById('modal-body').innerHTML = fields.length
@@ -2278,11 +2243,8 @@ function renderTasksTable(classes, results) {
         <th>クラス</th>
         <th>生徒名</th>
         <th>フェーズ</th>
-        <th>スキル</th>
-        <th>曲名</th>
-        <th>セクション</th>
-        <th>週</th>
-        <th>メモ</th>
+        <th>今回やったこと</th>
+        <th>次回やること</th>
         <th>課題</th>
       </tr>
     </thead>
@@ -2316,18 +2278,11 @@ function renderTasksTable(classes, results) {
     }).forEach(s => {
       const row = studentMap[s.name] || {};
 
-      // 入力値を直接表示（発表会曲があればそちらを優先）
       const phase       = row['フェーズ'] || s.phase || '';
-      const skill       = row['スキル']   || '';
       const cd          = CONCERT_DATA.find(d => d.className === className && d.name === s.name);
       const concertSong = cd?.song || '';
-      const baseSong    = row['曲名'] || LAST_SONGS[className + '___' + s.name]?.song || '';
-      const song        = concertSong
-        ? `${concertSong} <span style="font-size:10px;color:var(--accent2);">🎵発表会</span>`
-        : baseSong;
-      const section     = row['セクション'] || '';
-      const weeks       = row['何週目']   || LAST_SONGS[className + '___' + s.name]?.weeks || '';
       const memo        = row['メモ']     || '';
+      const nextLesson  = row['次回教えること'] || '';
 
       // 課題チェックボタン（課題上書き → 課題 の優先順）
       const homework    = row['課題上書き'] || row['課題'] || '';
@@ -2356,11 +2311,8 @@ function renderTasksTable(classes, results) {
         <td style="color:var(--accent);font-family:'Space Mono',monospace;font-size:10px;white-space:nowrap;">${className}</td>
         <td style="font-weight:700;white-space:nowrap;">${s.name}${trialBadge}${s.absent ? ' <span style="font-size:10px;color:var(--text3);">(休)</span>' : ''}</td>
         <td style="font-size:11px;white-space:nowrap;">${phase}</td>
-        <td style="font-size:11px;max-width:120px;">${skill}</td>
-        <td style="font-size:11px;">${song}</td>
-        <td style="font-size:11px;">${section}</td>
-        <td style="font-size:11px;text-align:center;">${weeks}</td>
-        <td style="font-size:11px;max-width:160px;color:var(--text2);">${memo}</td>
+        <td style="font-size:11px;max-width:180px;color:var(--text2);">${memo}</td>
+        <td style="font-size:11px;max-width:160px;color:var(--accent);">${nextLesson}</td>
         <td onclick="event.stopPropagation();">${hwCell}</td>
       </tr>`;
     });
