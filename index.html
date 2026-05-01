@@ -2296,7 +2296,6 @@ async function renderTasks(day) {
           </div>
           ${!s.absent && nextLesson ? `<div class="task-next">${nextLesson}</div>` : ''}
           ${!s.absent && overrideMemo ? `<div class="task-next" style="color:var(--accent2);">📝 ${overrideMemo}</div>` : ''}
-          ${!s.absent && song ? `<div class="task-song">🎵 ${song}${weeks ? ' ' + weeks + '週目' : ''}</div>` : ''}
           ${concertInfo}
         </div>`;
       }).join('');
@@ -2351,9 +2350,7 @@ function renderTasksTable(classes, results) {
         <th>生徒名</th>
         <th>フェーズ</th>
         <th>スキル</th>
-        <th>曲名</th>
         <th>セクション</th>
-        <th>週</th>
         <th>メモ</th>
         <th>課題</th>
       </tr>
@@ -2429,9 +2426,7 @@ function renderTasksTable(classes, results) {
         <td style="font-weight:700;white-space:nowrap;">${s.name}${trialBadge}${s.absent ? ' <span style="font-size:10px;color:var(--text3);">(休)</span>' : ''}</td>
         <td style="font-size:11px;white-space:nowrap;">${phase}</td>
         <td style="font-size:11px;max-width:120px;">${skill}</td>
-        <td style="font-size:11px;">${song}</td>
         <td style="font-size:11px;">${section}</td>
-        <td style="font-size:11px;text-align:center;">${weeks}</td>
         <td style="font-size:11px;max-width:160px;color:var(--text2);">${memo}</td>
         <td onclick="event.stopPropagation();">${hwCell}</td>
       </tr>`;
