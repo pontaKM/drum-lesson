@@ -966,44 +966,44 @@ function hideInitOverlay() {
 async function loadMasterData() {
   setInitProgress(5, 'データを読み込んでいます...');
 
-  // キャッシュから即時表示
-  const cached = localStorage.getItem('drumMasterCache');
-  if (cached) {
-    try {
+  // キャッシュから即時表示し、先にオーバーレイを消す
+  let hasCache = false;
+  try {
+    const cached = localStorage.getItem('drumMasterCache');
+    if (cached) {
       const parsed = JSON.parse(cached);
-      if (parsed.classes) {
-        CLASS_PRESETS = parsed.classes;
-        populateClassSelectors();
-      }
+      if (parsed.classes) { CLASS_PRESETS = parsed.classes; populateClassSelectors(); }
       if (parsed.transfers) TRANSFER_DATA = parsed.transfers;
       if (parsed.songs) LAST_SONGS = parsed.songs;
-      // キャッシュがあれば先にオーバーレイを消す（バックグラウンド更新）
+      hasCache = true;
       setInitProgress(100, '完了');
       hideInitOverlay();
-    } catch(e) {}
-  }
+    }
+  } catch(e) {}
 
-  // バックグラウンドで最新データを取得（キャッシュなし時は順番に進捗表示）
-  const hasCacheDisplay = !!cached;
-  if (!hasCacheDisplay) setInitProgress(10, '生徒マスターを読み込み中...');
-  await loadClassMaster();
+  // キャッシュなし時はプログレスを見せながら順次取得
+  try {
+    if (!hasCache) setInitProgress(10, '生徒マスターを読み込み中...');
+    await loadClassMaster();
 
-  if (!hasCacheDisplay) setInitProgress(50, '振替データを読み込み中...');
-  await loadTransferData();
+    if (!hasCache) setInitProgress(50, '振替データを読み込み中...');
+    await loadTransferData();
 
-  if (!hasCacheDisplay) setInitProgress(80, '曲履歴を読み込み中...');
-  await loadLastSongs();
+    if (!hasCache) setInitProgress(80, '曲履歴を読み込み中...');
+    await loadLastSongs();
 
-  localStorage.setItem('drumMasterCache', JSON.stringify({
-    classes: CLASS_PRESETS,
-    transfers: TRANSFER_DATA,
-    songs: LAST_SONGS,
-    updated: Date.now()
+    localStorage.setItem('drumMasterCache', JSON.stringify({
+      classes: CLASS_PRESETS,
+      transfers: TRANSFER_DATA,
+      songs: LAST_SONGS,
+      updated: Date.now()
     }));
-
-  if (!hasCacheDisplay) {
-    setInitProgress(100, '完了！');
-    hideInitOverlay();
+  } finally {
+    // キャッシュなし・エラー・タイムアウト いずれでも必ず抜ける
+    if (!hasCache) {
+      setInitProgress(100, '完了！');
+      hideInitOverlay();
+    }
   }
 }
 
