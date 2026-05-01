@@ -816,6 +816,49 @@
 </head>
 <body>
 
+<!-- 初期ロードオーバーレイ -->
+<div id="init-overlay" style="
+  position:fixed;inset:0;z-index:9999;
+  background:var(--bg);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:20px;transition:opacity 0.4s ease;
+">
+  <div style="font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--accent);letter-spacing:0.1em;">DRUM LESSON</div>
+  <div style="width:240px;">
+    <div style="height:4px;background:var(--border);border-radius:4px;overflow:hidden;">
+      <div id="init-bar" style="height:100%;width:0%;background:var(--accent);border-radius:4px;transition:width 0.4s ease;"></div>
+    </div>
+    <div id="init-label" style="margin-top:10px;font-size:12px;color:var(--text3);font-family:'Space Mono',monospace;text-align:center;">データを読み込んでいます...</div>
+  </div>
+</div>
+
+<!-- 保存完了画面 -->
+<div id="save-overlay" style="
+  position:fixed;inset:0;z-index:9998;
+  background:var(--bg);
+  display:none;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:24px;
+">
+  <div id="save-overlay-icon" style="font-size:64px;line-height:1;">✓</div>
+  <div id="save-overlay-title" style="font-size:22px;font-weight:700;color:var(--accent);font-family:'Space Mono',monospace;">保存しました</div>
+  <div id="save-overlay-names" style="font-size:14px;color:var(--text2);text-align:center;line-height:1.9;max-width:280px;"></div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:8px;">
+    <button onclick="closeSaveOverlay()" style="
+      background:var(--accent);color:#fff;border:none;
+      padding:14px 40px;border-radius:8px;font-size:15px;
+      font-family:'Noto Sans JP',sans-serif;font-weight:700;
+      cursor:pointer;letter-spacing:0.05em;
+    ">次のクラスを入力</button>
+    <button onclick="closeSaveOverlay(true)" style="
+      background:none;color:var(--text3);border:1px solid var(--border);
+      padding:10px 32px;border-radius:8px;font-size:13px;
+      font-family:'Noto Sans JP',sans-serif;cursor:pointer;
+    ">今週の準備タブへ</button>
+  </div>
+</div>
+
 <div class="header">
   <span class="header-title">Drum Lesson</span>
   <span class="header-date" id="today-date"></span>
@@ -906,7 +949,23 @@ let LAST_SONGS = {}; // 各生徒の前回曲名
 let CONCERT_DATA = []; // 発表会進捗データ
 let HW_CHECKS = []; // 課題チェック状態
 
+function setInitProgress(pct, label) {
+  const bar = document.getElementById('init-bar');
+  const lbl = document.getElementById('init-label');
+  if (bar) bar.style.width = pct + '%';
+  if (lbl) lbl.textContent = label;
+}
+
+function hideInitOverlay() {
+  const ov = document.getElementById('init-overlay');
+  if (!ov) return;
+  ov.style.opacity = '0';
+  setTimeout(() => ov.style.display = 'none', 400);
+}
+
 async function loadMasterData() {
+  setInitProgress(5, 'データを読み込んでいます...');
+
   // キャッシュから即時表示
   const cached = localStorage.getItem('drumMasterCache');
   if (cached) {
@@ -918,18 +977,34 @@ async function loadMasterData() {
       }
       if (parsed.transfers) TRANSFER_DATA = parsed.transfers;
       if (parsed.songs) LAST_SONGS = parsed.songs;
+      // キャッシュがあれば先にオーバーレイを消す（バックグラウンド更新）
+      setInitProgress(100, '完了');
+      hideInitOverlay();
     } catch(e) {}
   }
 
-  // バックグラウンドで最新データを取得・更新
-  Promise.all([loadClassMaster(), loadTransferData(), loadLastSongs()]).then(() => {
-    localStorage.setItem('drumMasterCache', JSON.stringify({
-      classes: CLASS_PRESETS,
-      transfers: TRANSFER_DATA,
-      songs: LAST_SONGS,
-      updated: Date.now()
+  // バックグラウンドで最新データを取得（キャッシュなし時は順番に進捗表示）
+  const hasCacheDisplay = !!cached;
+  if (!hasCacheDisplay) setInitProgress(10, '生徒マスターを読み込み中...');
+  await loadClassMaster();
+
+  if (!hasCacheDisplay) setInitProgress(50, '振替データを読み込み中...');
+  await loadTransferData();
+
+  if (!hasCacheDisplay) setInitProgress(80, '曲履歴を読み込み中...');
+  await loadLastSongs();
+
+  localStorage.setItem('drumMasterCache', JSON.stringify({
+    classes: CLASS_PRESETS,
+    transfers: TRANSFER_DATA,
+    songs: LAST_SONGS,
+    updated: Date.now()
     }));
-  });
+
+  if (!hasCacheDisplay) {
+    setInitProgress(100, '完了！');
+    hideInitOverlay();
+  }
 }
 
 async function loadClassMaster() {
@@ -1302,6 +1377,37 @@ function populateSkillSelects() {
   });
 }
 
+function resetStudentSlots() {
+  for (let i = 1; i <= STUDENT_COUNT; i++) {
+    document.getElementById(`s${i}_name`).value = '';
+    document.getElementById(`s${i}_phase`).value = 'Pre';
+    const memo = document.getElementById(`s${i}_memo`);
+    if (memo) memo.value = '';
+    const next = document.getElementById(`s${i}_next`);
+    if (next) next.value = '';
+    const cSong = document.getElementById(`s${i}_concert_song`);
+    const cSheet = document.getElementById(`s${i}_concert_sheet`);
+    const cReading = document.getElementById(`s${i}_concert_reading`);
+    if (cSong) cSong.value = '';
+    if (cSheet) cSheet.value = '';
+    if (cReading) cReading.value = '';
+    const cSec = document.getElementById(`s${i}_concert_section`);
+    if (cSec) cSec.style.display = 'none';
+    setAbsent(i, false);
+    const body = document.getElementById(`body-${i}`);
+    const btn = document.getElementById(`toggle-${i}`);
+    if (body) body.classList.remove('open');
+    if (btn) btn.textContent = '＋';
+  }
+}
+
+function resetStudents() {
+  // クラスを再読み込みしてリセット
+  const sel = document.getElementById('class-select');
+  if (sel && sel.value) loadPreset(sel);
+  else resetStudentSlots();
+}
+
 function loadPreset(selectEl) {
   const key = selectEl.value;
   if (!key) return;
@@ -1310,33 +1416,7 @@ function loadPreset(selectEl) {
   // class name is driven by select
 
   // 全生徒スロットをリセット（全入力欄をクリア）
-  for (let i = 1; i <= STUDENT_COUNT; i++) {
-    document.getElementById(`s${i}_name`).value = '';
-    document.getElementById(`s${i}_phase`).value = 'Pre';
-    // 今回やったこと・次回やることをクリア
-    const memo = document.getElementById(`s${i}_memo`);
-    if (memo) memo.value = '';
-    const next = document.getElementById(`s${i}_next`);
-    if (next) next.value = '';
-    // スライダーリセット（AI機能復活時に復元）
-    // 発表会欄をクリア
-    const cSong = document.getElementById(`s${i}_concert_song`);
-    const cSheet = document.getElementById(`s${i}_concert_sheet`);
-    const cReading = document.getElementById(`s${i}_concert_reading`);
-    if (cSong) cSong.value = '';
-    if (cSheet) cSheet.value = '';
-    if (cReading) cReading.value = '';
-    // 発表会セクションを非表示
-    const cSec = document.getElementById(`s${i}_concert_section`);
-    if (cSec) cSec.style.display = 'none';
-    // 休みトグルをリセット
-    setAbsent(i, false);
-    // 折りたたむ
-    const body = document.getElementById(`body-${i}`);
-    const btn = document.getElementById(`toggle-${i}`);
-    if (body) body.classList.remove('open');
-    if (btn) btn.textContent = '＋';
-  }
+  resetStudentSlots();
 
   // 今日の日付
   const todayStr = document.getElementById('lesson-date').value;
@@ -1409,12 +1489,12 @@ function buildStudentCard(i) {
       <div class="fields-grid">
         <div class="field-group" style="grid-column:1/-1;">
           <div class="field-label">今回やったこと <span style="color:var(--text3);font-weight:400;">（曲・セクション・内容など自由に）</span></div>
-          <textarea id="s${i}_memo" rows="3" placeholder="例：Aメロ〜Bメロ通し。右手のアクセントが安定してきた。テンポ80まで上げた。" style="width:100%;font-size:13px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text1);resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box;"></textarea>
+          <textarea id="s${i}_memo" rows="3" placeholder="例：Aメロ〜Bメロ通し。右手のアクセントが安定してきた。テンポ80まで上げた。" style="width:100%;font-size:13px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box;"></textarea>
         </div>
 
         <div class="field-group" style="grid-column:1/-1;">
           <div class="field-label">次回やること <span style="color:var(--text3);font-weight:400;">（目標・確認ポイント）</span></div>
-          <textarea id="s${i}_next" rows="2" placeholder="例：サビに入る。テンポ90で通し確認。" style="width:100%;font-size:13px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text1);resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box;"></textarea>
+          <textarea id="s${i}_next" rows="2" placeholder="例：サビに入る。テンポ90で通し確認。" style="width:100%;font-size:13px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box;"></textarea>
         </div>
         <div id="s${i}_concert_section" style="display:none;grid-column:1/-1;flex-direction:column;background:rgba(184,94,34,0.08);border:1px solid var(--accent2);border-radius:6px;padding:10px 12px;gap:8px;">
           <div style="font-size:11px;font-weight:700;color:var(--accent2);font-family:'Space Mono',monospace;letter-spacing:0.08em;">🎵 発表会（8/2）</div>
@@ -1718,7 +1798,6 @@ async function saveDirectly() {
   const data = collectData();
   if (!data) return;
 
-  // 名前が入っている生徒だけ対象
   const hasStudents = data.students.some(s => s.name && s.name !== 'なし');
   if (!hasStudents) {
     showError('生徒名が入力されていません');
@@ -1729,7 +1808,6 @@ async function saveDirectly() {
   btn.disabled = true;
   btn.textContent = '保存中...';
 
-  // AI判断なしで空のaiResultを渡して保存
   const emptyResult = {
     students: data.students.map(() => ({
       homework: false,
@@ -1743,10 +1821,15 @@ async function saveDirectly() {
     common: {stage: ''}
   };
 
-  await saveToSheet(data, emptyResult);
-
-  btn.textContent = '✓ スプレッドシートに保存';
-  btn.disabled = false;
+  try {
+    await saveToSheet(data, emptyResult);
+    // 保存完了オーバーレイを表示
+    const names = data.students.filter(s => s.name && s.name !== 'なし').map(s => s.name);
+    showSaveOverlay(names);
+  } finally {
+    btn.textContent = '✓ スプレッドシートに保存';
+    btn.disabled = false;
+  }
 }
 
 async function saveWithOverrides() {
@@ -1798,18 +1881,41 @@ async function saveToSheet(data, aiResult) {
       body: form
     });
     clearTaskCache(data.className);
-    showSaveStatus('✓ スプレッドシートに保存しました');
   } catch(e) {
     showSaveStatus('保存に失敗しました: ' + e.message, true);
+    throw e;  // saveDirectlyのfinallyに制御を返す
   }
 }
 
 function showSaveStatus(msg, isError = false) {
-  const el = document.getElementById('save-status');
-  el.textContent = msg;
-  el.style.color = isError ? 'var(--red)' : 'var(--green)';
-  el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 4000);
+  if (isError) {
+    // エラーはオーバーレイを出さずにalertで即通知
+    const el = document.getElementById('save-status');
+    el.textContent = msg;
+    el.style.color = 'var(--red)';
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 5000);
+    return;
+  }
+  // 成功は保存完了オーバーレイを表示
+  const ov = document.getElementById('save-overlay');
+  ov.style.display = 'flex';
+}
+
+function showSaveOverlay(studentNames) {
+  const ov = document.getElementById('save-overlay');
+  const namesEl = document.getElementById('save-overlay-names');
+  namesEl.textContent = studentNames.join('　');
+  ov.style.display = 'flex';
+}
+
+function closeSaveOverlay(goToTasks = false) {
+  document.getElementById('save-overlay').style.display = 'none';
+  if (goToTasks) {
+    switchTab('tasks');
+  }
+  // フォームを次の入力用にリセット（クラス選択・日付は保持）
+  resetStudents();
 }
 
 function switchTab(name) {
