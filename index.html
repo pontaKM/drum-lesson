@@ -1313,13 +1313,11 @@ function loadPreset(selectEl) {
   for (let i = 1; i <= STUDENT_COUNT; i++) {
     document.getElementById(`s${i}_name`).value = '';
     document.getElementById(`s${i}_phase`).value = 'Pre';
-    // スキル・セクション・メモをクリア
-    const skill = document.getElementById(`s${i}_skill`);
-    if (skill) skill.value = '';
-    const section = document.getElementById(`s${i}_song_section`);
-    if (section) section.value = '';
+    // 今回やったこと・次回やることをクリア
     const memo = document.getElementById(`s${i}_memo`);
     if (memo) memo.value = '';
+    const next = document.getElementById(`s${i}_next`);
+    if (next) next.value = '';
     // 曲・週数をクリア
     const song = document.getElementById(`s${i}_song`);
     if (song) song.value = '';
@@ -1422,17 +1420,6 @@ function buildStudentCard(i) {
     </div>
     <div class="student-body" id="body-${i}">
       <div class="fields-grid">
-        <div class="field-group" style="grid-column:1/-1;">
-          <div class="field-label">今日やったスキル <span style="color:var(--text3);font-weight:400;">（下から選択 or 直接入力）</span></div>
-          <select onchange="fillSkill(this, ${i})" style="margin-bottom:6px;font-size:12px;color:var(--text2);">
-            <option value="">── スキルを選ぶ（注釈付き） ──</option>
-          </select>
-          <input type="text" id="s${i}_skill" placeholder="例：SK-204 8ビートtemp60 / 曲練習">
-        </div>
-        <div class="field-group" style="grid-column:1/-1;">
-          <div class="field-label">今日やったセクション</div>
-          <input type="text" id="s${i}_song_section" placeholder="例：Aメロ・サビ・通し・本日終わり">
-        </div>
         <div style="grid-column:1/-1;display:flex;gap:12px;align-items:center;padding:4px 0;">
           <span style="font-size:11px;color:var(--text3);">曲：</span>
           <input type="text" id="s${i}_song" readonly
@@ -1444,9 +1431,14 @@ function buildStudentCard(i) {
             placeholder="自動">
         </div>
 
-        <div class="field-group" style="grid-column: 1/-1;">
-          <div class="field-label">メモ</div>
-          <input type="text" id="s${i}_memo" placeholder="任意">
+        <div class="field-group" style="grid-column:1/-1;">
+          <div class="field-label">今回やったこと <span style="color:var(--text3);font-weight:400;">（曲・セクション・内容など自由に）</span></div>
+          <textarea id="s${i}_memo" rows="3" placeholder="例：Aメロ〜Bメロ通し。右手のアクセントが安定してきた。テンポ80まで上げた。" style="width:100%;font-size:13px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text1);resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box;"></textarea>
+        </div>
+
+        <div class="field-group" style="grid-column:1/-1;">
+          <div class="field-label">次回やること <span style="color:var(--text3);font-weight:400;">（目標・確認ポイント）</span></div>
+          <textarea id="s${i}_next" rows="2" placeholder="例：サビに入る。テンポ90で通し確認。" style="width:100%;font-size:13px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text1);resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box;"></textarea>
         </div>
         <div id="s${i}_concert_section" style="display:none;grid-column:1/-1;flex-direction:column;background:rgba(184,94,34,0.08);border:1px solid var(--accent2);border-radius:6px;padding:10px 12px;gap:8px;">
           <div style="font-size:11px;font-weight:700;color:var(--accent2);font-family:'Space Mono',monospace;letter-spacing:0.08em;">🎵 発表会（8/2）</div>
@@ -1489,15 +1481,16 @@ function collectData() {
     students.push({
       name,
       phase: document.getElementById(`s${i}_phase`).value,
-      skill: document.getElementById(`s${i}_skill`).value || 'なし',
       mastery: '3',  // AI機能復活時にスライダーから取得
       practice: '3',
       motive: '3',
       autonomy: '3',
+      skill: 'なし',  // AI接続時にスキルマスターから参照
       song: document.getElementById(`s${i}_song`).value || 'なし',
-      songSection: document.getElementById(`s${i}_song_section`).value || 'なし',
+      songSection: 'なし',  // memoに統合
       songWeeks: document.getElementById(`s${i}_song_weeks`).value || '自動',
       memo: document.getElementById(`s${i}_memo`).value || 'なし',
+      nextLesson: document.getElementById(`s${i}_next`).value || 'なし',
       concertSong:          (document.getElementById(`s${i}_concert_song`)?.value    || ''),
       concertSheetStatus:   (document.getElementById(`s${i}_concert_sheet`)?.value   || ''),
       concertReadingStatus: (document.getElementById(`s${i}_concert_reading`)?.value || ''),
@@ -1511,12 +1504,9 @@ function buildPrompt(data) {
 生徒${idx + 1}
 - 名前：${s.name}
 - 現在フェーズ：${s.phase}
-- 今日やったスキル：${s.skill}
-- 習熟度：${s.mastery} / 練習してきた度：${s.practice} / モチベーション：${s.motive} / 自律度：${s.autonomy}
-- 今日やった曲：${s.song}
-- 今日やったセクション：${s.songSection}
-- 何週目：${s.songWeeks}
-- メモ：${s.memo}`).join('\n');
+- 今日やった曲：${s.song}（${s.songWeeks}週目）
+- 今回やったこと：${s.memo}
+- 次回やること（講師メモ）：${s.nextLesson}`).join('\n');
 
   return `あなたはドラム講師のアシスタントです。以下のレッスン記録をもとに判断してください。
 
@@ -2100,15 +2090,15 @@ function renderReview(rows, className) {
             }).join('')}
           </div>
         </div>
-        ${row['スキル'] && row['スキル'] !== 'なし' ? `
-        <div class="review-field review-field-full">
-          <div class="review-field-label">前回のスキル</div>
-          <div class="review-field-val">${row['スキル']}</div>
-        </div>` : ''}
         ${row['メモ'] && row['メモ'] !== 'なし' ? `
         <div class="review-field review-field-full">
-          <div class="review-field-label">前回のメモ</div>
+          <div class="review-field-label">前回やったこと</div>
           <div class="review-field-val">${row['メモ']}</div>
+        </div>` : ''}
+        ${row['次回教えること'] && row['次回教えること'] !== 'なし' ? `
+        <div class="review-field review-field-full">
+          <div class="review-field-label">次回やること（前回メモ）</div>
+          <div class="review-field-val" style="color:var(--accent);">${row['次回教えること']}</div>
         </div>` : ''}
       </div>
     </div>`;
