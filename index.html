@@ -2169,8 +2169,13 @@ function renderReview(rows, className) {
         </div>
         ${row['メモ'] && row['メモ'] !== 'なし' ? `
         <div class="review-field review-field-full">
-          <div class="review-field-label">前回のメモ</div>
+          <div class="review-field-label">今回やったこと</div>
           <div class="review-field-val">${row['メモ']}</div>
+        </div>` : ''}
+        ${row['次回教えること'] && row['次回教えること'] !== 'なし' ? `
+        <div class="review-field review-field-full">
+          <div class="review-field-label">次回やること</div>
+          <div class="review-field-val" style="color:var(--accent);">${row['次回教えること']}</div>
         </div>` : ''}
       </div>
     </div>`;
@@ -2314,13 +2319,10 @@ function openStudentModal(name, row) {
   document.getElementById('modal-name').textContent = name;
 
   const fields = [
-    {label: 'フェーズ',    val: row['フェーズ']  || ''},
-    {label: 'スキル',      val: row['スキル']    || ''},
-    {label: '曲名',        val: row['曲名']      || ''},
-    {label: 'セクション',  val: row['セクション'] || ''},
-    {label: '何週目',      val: row['何週目']    || ''},
-    {label: 'メモ',        val: row['メモ']      || ''},
-    {label: 'レッスン日',  val: row['レッスン日'] ? new Date(row['レッスン日']).toLocaleDateString('ja-JP') : ''},
+    {label: 'フェーズ',        val: row['フェーズ']         || ''},
+    {label: '今回やったこと',  val: row['メモ']              || ''},
+    {label: '次回やること',    val: row['次回教えること']    || ''},
+    {label: 'レッスン日',      val: row['レッスン日'] ? new Date(row['レッスン日']).toLocaleDateString('ja-JP') : ''},
   ].filter(f => f.val && f.val !== 'なし');
 
   document.getElementById('modal-body').innerHTML = fields.length
@@ -2348,10 +2350,12 @@ function renderTasksTable(classes, results) {
       <tr>
         <th>クラス</th>
         <th>生徒名</th>
+        <th>クラス</th>
+        <th>生徒名</th>
         <th>フェーズ</th>
-        <th>スキル</th>
-        <th>セクション</th>
-        <th>メモ</th>
+        <th>今回やったこと</th>
+        <th>次回やること</th>
+        <th>課題</th>
         <th>課題</th>
       </tr>
     </thead>
@@ -2387,16 +2391,8 @@ function renderTasksTable(classes, results) {
 
       const phase       = row['フェーズ'] || s.phase || '';
       const skill       = row['スキル']   || '';
-      const cd          = CONCERT_DATA.find(d => d.className === className && d.name === s.name);
-      const concertSong = cd?.song || '';
-      const baseSong    = row['曲名'] || LAST_SONGS[className + '___' + s.name]?.song || '';
-      const song        = concertSong
-        ? `${concertSong} <span style="font-size:10px;color:var(--accent2);">🎵発表会</span>`
-        : baseSong;
-      const section     = row['セクション'] || '';
-      const weeks       = row['何週目'] || LAST_SONGS[className + '___' + s.name]?.weeks || '';
-      const memo        = row['メモ']     || '';
-      const nextLesson  = row['次回教えること'] || '';
+      const memo        = row['メモ']              || '';
+      const nextLesson  = row['次回教えること']    || '';
 
       // 課題チェックボタン（課題上書き → 課題 の優先順）
       const homework    = row['課題上書き'] || row['課題'] || '';
@@ -2425,9 +2421,8 @@ function renderTasksTable(classes, results) {
         <td style="color:var(--accent);font-family:'Space Mono',monospace;font-size:10px;white-space:nowrap;">${className}</td>
         <td style="font-weight:700;white-space:nowrap;">${s.name}${trialBadge}${s.absent ? ' <span style="font-size:10px;color:var(--text3);">(休)</span>' : ''}</td>
         <td style="font-size:11px;white-space:nowrap;">${phase}</td>
-        <td style="font-size:11px;max-width:120px;">${skill}</td>
-        <td style="font-size:11px;">${section}</td>
-        <td style="font-size:11px;max-width:160px;color:var(--text2);">${memo}</td>
+        <td style="font-size:12px;max-width:200px;color:var(--text2);line-height:1.5;">${memo}</td>
+        <td style="font-size:12px;max-width:180px;color:var(--accent);line-height:1.5;">${nextLesson}</td>
         <td onclick="event.stopPropagation();">${hwCell}</td>
       </tr>`;
     });
