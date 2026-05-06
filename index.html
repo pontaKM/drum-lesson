@@ -1459,16 +1459,7 @@ function loadPreset(selectEl) {
 }
 
 function buildStudentCard(i) {
-  /* スライダー（AI機能用・将来接続時に復活）
-  const sliders = [
-    {key:'mastery', label:'習熟度'},
-    {key:'practice', label:'練習度'},
-    {key:'motive', label:'モチベ'},
-    {key:'autonomy', label:'自律度'},
-  ];
-  const sliderHTML = sliders.map(...).join('');
-  */
-  const sliderHTML = '';
+
 
   const phaseOptions = PHASES.map(p =>
     `<option value="${p}">${p}</option>`).join('');
@@ -1537,10 +1528,6 @@ function collectData() {
     students.push({
       name,
       phase: document.getElementById(`s${i}_phase`).value,
-      mastery: '3',  // AI機能復活時にスライダーから取得
-      practice: '3',
-      motive: '3',
-      autonomy: '3',
       skill: 'なし',     // AI接続時にスキルマスターから参照
       song: 'なし',      // AI接続時に「今回やったこと」から自動判別
       songSection: 'なし',
@@ -2151,22 +2138,7 @@ function renderReview(rows, className) {
           <div class="review-field-label">曲アドバイス</div>
           <div class="review-field-val">${row['曲アドバイス'] || '-'}</div>
         </div>
-        <div class="review-field review-field-full" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;">
-          <div class="review-field-label" style="margin-bottom:4px;">前回の入力値</div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap;">
-            ${[
-              {label:'習熟度', key:'習熟度'},
-              {label:'練習度', key:'練習度'},
-              {label:'モチベ', key:'モチベ'},
-              {label:'自律度', key:'自律度'},
-            ].map(f => {
-              const val = row[f.key];
-              if (!val) return '';
-              const color = val >= 4 ? 'var(--green)' : val <= 2 ? 'var(--red)' : 'var(--yellow)';
-              return `<span style="font-size:11px;color:var(--text3);">${f.label}：<span style="color:${color};font-weight:700;font-family:'Space Mono',monospace;">${val}</span></span>`;
-            }).join('')}
-          </div>
-        </div>
+
         ${row['メモ'] && row['メモ'] !== 'なし' ? `
         <div class="review-field review-field-full">
           <div class="review-field-label">今回やったこと</div>
