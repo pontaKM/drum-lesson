@@ -259,199 +259,26 @@
   }
 
   /* Run button */
-  .run-btn {
-    width: 100%;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: var(--radius);
-    padding: 18px;
-    font-family: 'Space Mono', monospace;
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: opacity 0.15s, transform 0.1s;
-  }
   .run-btn:hover { opacity: 0.9; }
   .run-btn:active { transform: scale(0.99); }
   .run-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
   /* Output */
-  .output-area {
-    display: none;
-    margin-top: 32px;
-  }
-  .output-area.visible { display: block; }
 
   /* Score card */
-  .score-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-    margin-bottom: 16px;
-  }
 
-  .score-total {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-  .score-badge {
-    font-family: 'Space Mono', monospace;
-    font-size: 32px;
-    font-weight: 700;
-    line-height: 1;
-  }
-  .score-badge.green { color: var(--green); }
-  .score-badge.yellow { color: var(--yellow); }
-  .score-badge.red { color: var(--red); }
-  .score-label {
-    font-size: 12px;
-    color: var(--text2);
-  }
-  .score-judgment {
-    font-size: 18px;
-    margin-left: 4px;
-  }
 
-  .score-axes {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 8px;
-  }
-  .axis-item {
-    background: var(--surface2);
-    border-radius: 6px;
-    padding: 10px 8px;
-    text-align: center;
-  }
-  .axis-label {
-    font-size: 10px;
-    color: var(--text3);
-    margin-bottom: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .axis-val {
-    font-family: 'Space Mono', monospace;
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--text);
-  }
 
   /* Common bar */
-  .common-bar {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px 20px;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-  }
-  .common-stage {
-    display: flex;
-    gap: 6px;
-  }
-  .stage-dot {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: var(--surface2);
-    border: 2px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    color: var(--text3);
-    transition: all 0.2s;
-  }
-  .stage-dot.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-    font-weight: 700;
-  }
 
   /* Student result cards */
   .result-cards { display: grid; gap: 10px; margin-bottom: 16px; }
 
-  .result-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-  .result-card-header {
-    padding: 12px 16px;
-    background: var(--surface2);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .result-name {
-    font-weight: 700;
-    font-size: 14px;
-  }
-  .homework-badge {
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-  }
-  .homework-yes { background: rgba(74,110,56,0.12); color: var(--accent); border: 1px solid rgba(74,110,56,0.3); }
-  .homework-no { background: rgba(184,94,34,0.12); color: var(--accent2); border: 1px solid rgba(184,94,34,0.25); }
 
-  .result-card-body {
-    padding: 14px 16px;
-    display: grid;
-    gap: 10px;
-  }
-  .result-row { display: grid; gap: 4px; }
-  .result-row-label {
-    font-size: 10px;
-    color: var(--text3);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    font-family: 'Space Mono', monospace;
-  }
-  .result-row-val {
-    font-size: 13px;
-    color: var(--text);
-    line-height: 1.6;
-  }
 
   /* Action box */
-  .action-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--accent);
-    border-radius: var(--radius);
-    padding: 16px 20px;
-    margin-bottom: 16px;
-    font-size: 13px;
-    line-height: 1.7;
-    color: var(--text);
-  }
 
   /* Loading */
-  .loading {
-    display: none;
-    text-align: center;
-    padding: 48px 0;
-    color: var(--text2);
-  }
-  .loading.visible { display: block; }
   .loading-dots {
     font-family: 'Space Mono', monospace;
     font-size: 24px;
@@ -763,32 +590,6 @@
   }
 
   /* Override */
-  .override-box {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 10px 12px;
-    margin-top: 8px;
-  }
-  .override-row {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 8px;
-    flex-wrap: wrap;
-  }
-  .override-label {
-    font-size: 11px;
-    color: var(--text3);
-    font-family: 'Space Mono', monospace;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-  .override-radio {
-    display: flex;
-    gap: 12px;
-  }
   .override-radio label {
     display: flex;
     align-items: center;
@@ -802,10 +603,6 @@
     border: none;
     padding: 0;
     accent-color: var(--accent);
-  }
-  .override-memo {
-    font-size: 13px;
-    padding: 8px 10px;
   }
 
   /* Scrollbar */
@@ -866,17 +663,9 @@
 
 <div class="container">
 
-  <!-- API Key (AI機能用・現在無効化中) -->
-  <!--
-  <div class="apikey-row" id="apikey-row">
-    <label>API KEY</label>
-    <input type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off">
-  </div>
-  -->
-
   <!-- Tabs -->
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('input')">入力・AI判断</button>
+    <button class="tab-btn active" onclick="switchTab('input')">入力</button>
     <button class="tab-btn" onclick="switchTab('tasks')">今週の準備</button>
   </div>
 
@@ -910,12 +699,6 @@
   </button>
   <div class="error-msg" id="error-msg"></div>
   <div id="save-status" style="display:none;margin-top:10px;font-size:12px;font-family:'Space Mono',monospace;text-align:center;"></div>
-
-  <!-- AI機能（将来接続用・現在無効化中）
-  <button class="run-btn" id="run-btn" onclick="runAI()">▶ AI判断を実行</button>
-  <div class="loading" id="loading">...</div>
-  <div class="output-area" id="output-area">...</div>
-  -->
 
 </div><!-- /tab-input -->
 
@@ -1542,244 +1325,8 @@ function collectData() {
   return { className, lessonDate, students };
 }
 
-function buildPrompt(data) {
-  const studentLines = data.students.map((s, idx) => `
-生徒${idx + 1}
-- 名前：${s.name}
-- 現在フェーズ：${s.phase}
-- 今回やったこと：${s.memo}
-- 次回やること（講師メモ）：${s.nextLesson}`).join('\n');
 
-  return `あなたはドラム講師のアシスタントです。以下のレッスン記録をもとに判断してください。
 
-### 前提知識
-
-フェーズ：Pre→Ph.1（フォーム）→Ph.2（8ビート基礎★最重要）→Ph.3（バリエーション）→Ph.4（フィルイン入門）→Ph.5（フィルイン発展/ハイハット）→Ph.6（特殊奏法）→中級
-
-曲練習の指針：
-- セクション情報から状態を推測する（「通し」なら全体練習、セクション名なら部分練習）
-- 次曲候補がある場合は移行タイミングを判断する
-
-曲の継続期間による変更提案：
-- 集中力なし・モチベ低め（1〜2）：4週目あたりで曲変更を提案
-- 標準（モチベ3）：8〜10週目で変更を提案
-- 意欲が高い（モチベ4〜5）：16週以上継続もOK、本人が満足するまで
-
-課題判断ルール：
-- 練習度1〜2：課題なし（出しても意味がない）
-- 練習度3以上×習熟度低：同じ内容をもう一週
-- 練習度3以上×習熟度高：次ステップへ
-- モチベ1〜2：楽しさ優先、難度を下げる
-- 自律度4〜5：自主練の方向性を示す課題が有効
-- 自律度1〜2：課題を出さない
-
-グループ特性：1クラス5人・年齢もレベルもバラバラ。上手い子には1tips発展、遅れている子には復習案を。
-メモに「次曲：〇〇」が含まれる場合は曲アドバイスに次曲への移行タイミングを含める。
-メモに「課題：〇〇」が含まれる場合はその内容を課題として必ず採用し、homework=trueとする。homework_reasonにはメモの課題内容をそのまま使う。
-
-### 入力データ
-
-クラス名：${data.className}
-レッスン日：${data.lessonDate}
-${studentLines}
-
-### 出力形式（必ずJSONで返してください。前置きや説明文は不要）
-
-{
-  "score": {
-    "A": <0-5の整数>,
-    "A_comment": "<準備物の多さについて一言>",
-    "B": <0-5の整数>,
-    "B_comment": "<レベル差について一言>",
-    "C": <0-5の整数>,
-    "C_comment": "<曲バラバラ度について一言>",
-    "D": <0-5の整数>,
-    "D_comment": "<自律度の低さについて一言>",
-    "E": <0-5の整数>,
-    "E_comment": "<習熟度停滞について一言>",
-    "total": <合計0-25>,
-    "action": "<先生へのアクション提案1〜2文>"
-  },
-  "common": {
-    "stage": <0-4の整数>,
-    "proposal": "<共通化移行提案1〜2文>"
-  },
-  "students": [
-    {
-      "name": "<名前>",
-      "homework": <true/false>,
-      "homework_reason": "<理由一言>",
-      "next_lesson": "<次回教えること>",
-      "teaching_point": "<説明ポイント・比喩案>",
-      "tips": "<1tips発展案または復習案>",
-      "song_advice": "<曲練習の次のステップ（セクション・完成度目標・曲変更提案など）>"
-    }
-  ],
-  "summary": "<クラス全体まとめ1〜2文>"
-}`;
-}
-
-async function runAI() {
-  const apiKey = document.getElementById('api-key').value.trim();
-  if (!apiKey) { showError('APIキーを入力してください'); return; }
-
-  const data = collectData();
-  if (data.students.length === 0) { showError('生徒名を1人以上入力してください'); return; }
-
-  const btn = document.getElementById('run-btn');
-  btn.disabled = true;
-  document.getElementById('loading').classList.add('visible');
-  document.getElementById('output-area').classList.remove('visible');
-  document.getElementById('error-msg').classList.remove('visible');
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
-        messages: [{ role: 'user', content: buildPrompt(data) }]
-      })
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error?.message || `HTTP ${res.status}`);
-    }
-
-    const json = await res.json();
-    const text = json.content.map(b => b.text || '').join('');
-
-    // JSONブロックを抽出してクリーニング
-    let clean = text;
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) clean = jsonMatch[0];
-    clean = clean
-      .replace(/```json|```/g, '')
-      .replace(/,(\s*[}\]])/g, '$1')
-      .trim();
-
-    let result;
-    try {
-      result = JSON.parse(clean);
-    } catch(parseErr) {
-      // それでも失敗したらエラー詳細を表示
-      throw new Error('AI出力のJSON解析に失敗しました。もう一度実行してください。');
-    }
-    renderOutput(result, data);
-    // AI結果をグローバルに保持（保存ボタン押下時に使う）
-    window._lastResult = result;
-    window._lastData = data;
-
-  } catch (e) {
-    showError('エラー：' + e.message);
-  } finally {
-    btn.disabled = false;
-    document.getElementById('loading').classList.remove('visible');
-  }
-}
-
-function renderOutput(r, data) {
-  // Score
-  const total = r.score.total;
-  const colorClass = total <= 8 ? 'green' : total <= 16 ? 'yellow' : 'red';
-  const judgment = total <= 8 ? '🟢 低負担' : total <= 16 ? '🟡 中負担' : '🔴 高負担';
-
-  const axes = [
-    {key:'A', label:'準備物'},
-    {key:'B', label:'レベル差'},
-    {key:'C', label:'曲バラバラ'},
-    {key:'D', label:'自律度低'},
-    {key:'E', label:'停滞'},
-  ];
-
-  document.getElementById('score-card').innerHTML = `
-    <div class="score-total">
-      <span class="score-badge ${colorClass}">${total}</span>
-      <span class="score-label">/ 25</span>
-      <span class="score-judgment">${judgment}</span>
-    </div>
-    <div class="score-axes">
-      ${axes.map(a => `
-        <div class="axis-item" title="${r.score[a.key + '_comment']}">
-          <div class="axis-label">${a.label}</div>
-          <div class="axis-val">${r.score[a.key]}</div>
-        </div>`).join('')}
-    </div>`;
-
-  // Common
-  const stage = r.common.stage;
-  const stageLabels = ['全員バラバラ','2人で1曲','複数組','1〜2曲','全員1曲'];
-  document.getElementById('common-bar').innerHTML = `
-    <div>
-      <div class="section-label" style="margin-bottom:8px;">曲の共通化</div>
-      <div class="common-stage">
-        ${[0,1,2,3,4].map(n => `<div class="stage-dot ${n === stage ? 'active' : ''}">${n}</div>`).join('')}
-      </div>
-    </div>
-    <div style="font-size:12px;color:var(--text2);max-width:60%;line-height:1.6;">${r.common.proposal}</div>`;
-
-  // Action
-  document.getElementById('action-box').textContent = r.score.action;
-
-  // Students
-  document.getElementById('result-cards').innerHTML = r.students.map((s, idx) => `
-    <div class="result-card">
-      <div class="result-card-header">
-        <span class="result-name">${s.name}</span>
-        <span class="homework-badge ${s.homework ? 'homework-yes' : 'homework-no'}">
-          ${s.homework ? '課題あり' : '課題なし'}
-        </span>
-      </div>
-      <div class="result-card-body">
-        <div class="result-row">
-          <div class="result-row-label">理由</div>
-          <div class="result-row-val">${s.homework_reason}</div>
-        </div>
-        <div class="result-row">
-          <div class="result-row-label">次回教えること</div>
-          <div class="result-row-val">${s.next_lesson}</div>
-        </div>
-        <div class="result-row">
-          <div class="result-row-label">説明ポイント</div>
-          <div class="result-row-val">${s.teaching_point}</div>
-        </div>
-        <div class="result-row">
-          <div class="result-row-label">発展 / 復習案</div>
-          <div class="result-row-val">${s.tips}</div>
-        </div>
-        ${s.song_advice ? `
-        <div class="result-row" style="border-top:1px solid var(--border);padding-top:10px;margin-top:2px;">
-          <div class="result-row-label" style="color:var(--accent2);">🎵 曲練習アドバイス</div>
-          <div class="result-row-val">${s.song_advice}</div>
-        </div>` : ''}
-        <div class="override-box">
-          <div class="override-row">
-            <span class="override-label">課題 上書き</span>
-            <div class="override-radio">
-              <label><input type="radio" name="override_hw_${idx}" value="ai" checked> AIのまま</label>
-              <label><input type="radio" name="override_hw_${idx}" value="yes"> 出す</label>
-              <label><input type="radio" name="override_hw_${idx}" value="no"> 出さない</label>
-            </div>
-          </div>
-          <input type="text" class="override-memo" id="override_memo_${idx}"
-            placeholder="メモ（例：楽譜を渡す・次回確認）">
-        </div>
-      </div>
-    </div>`).join('');
-
-  // Summary
-  document.getElementById('summary-box').textContent = r.summary;
-
-  document.getElementById('output-area').classList.add('visible');
-  document.getElementById('output-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
 
 async function saveDirectly() {
   const data = collectData();
@@ -1795,21 +1342,8 @@ async function saveDirectly() {
   btn.disabled = true;
   btn.textContent = '保存中...';
 
-  const emptyResult = {
-    students: data.students.map(() => ({
-      homework: false,
-      homework_reason: '',
-      next_lesson: '',
-      teaching_point: '',
-      tips: '',
-      song_advice: ''
-    })),
-    score: {total: ''},
-    common: {stage: ''}
-  };
-
   try {
-    await saveToSheet(data, emptyResult);
+    await saveToSheet(data);
     // 保存完了オーバーレイを表示
     const names = data.students.filter(s => s.name && s.name !== 'なし').map(s => s.name);
     showSaveOverlay(names);
@@ -1819,36 +1353,6 @@ async function saveDirectly() {
   }
 }
 
-async function saveWithOverrides() {
-  const result = window._lastResult;
-  const data = window._lastData;
-  if (!result || !data) {
-    showSaveStatus('先にAI判断を実行してください', true);
-    return;
-  }
-
-  // 上書きデータを収集
-  result.students.forEach((s, idx) => {
-    const overrideRadio = document.querySelector(`input[name="override_hw_${idx}"]:checked`);
-    const overrideMemo = document.getElementById(`override_memo_${idx}`);
-    if (overrideRadio && overrideRadio.value !== 'ai') {
-      s.homework_override = overrideRadio.value === 'yes';
-      s.homework_overridden = true;
-    } else {
-      s.homework_overridden = false;
-    }
-    if (overrideMemo && overrideMemo.value) {
-      s.override_memo = overrideMemo.value;
-    }
-  });
-
-  const btn = document.getElementById('save-btn');
-  btn.disabled = true;
-  btn.textContent = '保存中...';
-  await saveToSheet(data, result);
-  btn.textContent = '✓ この内容でスプレッドシートに保存';
-  btn.disabled = false;
-}
 
 function clearTaskCache(className) {
   try {
@@ -1856,9 +1360,9 @@ function clearTaskCache(className) {
   } catch(e) {}
 }
 
-async function saveToSheet(data, aiResult) {
+async function saveToSheet(data) {
   try {
-    const payload = JSON.stringify({ ...data, aiResult });
+    const payload = JSON.stringify(data);
     // GASはno-corsだとリダイレクトを追えないためフォーム送信方式で回避
     const form = new FormData();
     form.append('payload', payload);
@@ -2156,18 +1660,7 @@ function renderReview(rows, className) {
   document.getElementById('review-content').innerHTML = html;
 }
 
-function toggleApiKey() {
-  const input = document.getElementById('api-key');
-  const row = document.getElementById('apikey-row');
-  row.style.display = 'none';
-  document.getElementById('apikey-saved').style.display = 'block';
-}
 
-function showApiKey() {
-  document.getElementById('apikey-row').style.display = 'flex';
-  document.getElementById('apikey-saved').style.display = 'none';
-  document.getElementById('api-key').focus();
-}
 
 let currentDay = 'fri';
 
